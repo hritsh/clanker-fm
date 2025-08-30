@@ -10,11 +10,11 @@ import Link from 'next/link';
 
 // Timing and animation constants
 const SCANNING_CONSTANTS = {
-    ITEM_DISPLAY_DURATION: 4000, // Total time per item (ms)
-    TRANSITION_DURATION: 3000, // Album cover transition duration (ms)
-    COMMENT_DELAY: 3200, // Delay before showing comment (ms) - slightly after transition
+    ITEM_DISPLAY_DURATION: 4500, // Total time per item (ms)
+    TRANSITION_DURATION: 2500, // Album cover transition duration (ms)
+    COMMENT_DELAY: 3000, // Delay before showing comment (ms) - slightly after transition
     TYPING_SPEED: 90, // Comment typing speed
-    FINAL_TRANSITION_DELAY: 1500, // Delay before moving to next step (ms)
+    FINAL_TRANSITION_DELAY: 2000, // Delay before moving to next step (ms)
 };
 
 type Choice = {
