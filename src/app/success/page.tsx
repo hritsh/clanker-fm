@@ -6,6 +6,7 @@ import { TypeAnimation } from 'react-type-animation';
 import { motion, AnimatePresence } from 'framer-motion';
 import Loading from '../../components/Loading';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 type Choice = {
     text: string;
@@ -13,41 +14,45 @@ type Choice = {
     imageUrl?: string;
 };
 
+type Question = {
+    id: string;
+    type: 'slider' | 'image_choice' | 'mcq';
+    question: string;
+    choices: Choice[];
+    responses: Record<string, string>;
+};
+
+type RoastExperience = {
+    introMessage: string;
+    questions: Question[];
+    finalVerdict: string;
+};
+
 type ScannableItem = {
     name: string;
     artist: string;
     imageUrl: string;
+    comment: string;
 }
-
-type Conversation = {
-    step: string;
-    botMessage: string | null;
-    choices: Choice[];
-    roastData: any | null;
-    type?: 'slider' | 'image_choice' | 'mcq';
-    conversationHistory: any[];
-    currentQuestionIndex: number;
-    questionId?: string;
-};
 
 export default function SuccessPage() {
     const { data: session, status } = useSession();
-    const [conversation, setConversation] = useState<Conversation>({
-        step: 'initial',
-        botMessage: null,
-        choices: [],
-        roastData: null,
-        conversationHistory: [],
-        currentQuestionIndex: 0,
-    });
-    const [isLoading, setIsLoading] = useState(true);
+    const [step, setStep] = useState<'intro' | 'fetching' | 'scanning' | 'ready' | 'questions' | 'complete'>('intro');
+    const [roastData, setRoastData] = useState<any>(null);
+    const [roastExperience, setRoastExperience] = useState<RoastExperience | null>(null);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [userAnswers, setUserAnswers] = useState<string[]>([]);
+    const [questionResponses, setQuestionResponses] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [sliderValue, setSliderValue] = useState(50);
     const [showChoices, setShowChoices] = useState(false);
+    const [showResponse, setShowResponse] = useState(false);
+    const [introMessage, setIntroMessage] = useState('');
 
+    // Scanning state
     const [scannableItems, setScannableItems] = useState<ScannableItem[]>([]);
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
-    const [snarkyComment, setSnarkyComment] = useState('');
     const [isScanning, setIsScanning] = useState(false);
     const scannerRef = useRef<HTMLDivElement>(null);
     const [finalTransform, setFinalTransform] = useState<string | undefined>(undefined);
@@ -59,97 +64,83 @@ export default function SuccessPage() {
     }, [status]);
 
     useEffect(() => {
-        if (status === 'authenticated' && conversation.step === 'initial') {
-            handleInitialFetch();
+        if (status === 'authenticated' && step === 'intro') {
+            handleIntroMessage();
         }
-    }, [status, conversation.step]);
+    }, [status, step]);
 
-    useEffect(() => {
-        if (conversation.botMessage) {
-            setShowChoices(false);
-        }
-    }, [conversation.botMessage]);
-
-    useEffect(() => {
-        const choicesWithImages = conversation.choices.filter(c => c.imageUrl);
-        if (choicesWithImages.length > 0) {
-            choicesWithImages.forEach(choice => {
-                if (choice.imageUrl) {
-                    const img = new Image();
-                    img.src = choice.imageUrl;
-                }
+    const handleIntroMessage = async () => {
+        try {
+            const response = await fetch('/api/get-roast-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'intro' }),
             });
+            const data = await response.json();
+            setIntroMessage(data.introMessage);
+        } catch (err) {
+            setIntroMessage("hey there. i'm clanker, and i'm about to judge your music taste.");
         }
-    }, [conversation.choices]);
-
-    const startScanner = (data: any) => {
-        const topTracks = data.topTracks?.items || [];
-        const recentlyPlayed = data.recentlyPlayed?.items || [];
-
-        const validItems = [...topTracks, ...recentlyPlayed.map((item: any) => item.track)]
-            .map((item: any) => ({
-                name: item.name,
-                artist: item.artists?.[0]?.name || 'Unknown Artist',
-                imageUrl: item.album?.images?.[0]?.url || '',
-            }))
-            .filter(item => item.imageUrl);
-
-        const uniqueItems = Array.from(
-            new Map(validItems.map(item => [item.imageUrl, item])).values()
-        );
-        const shuffledItems = uniqueItems.sort(() => 0.5 - Math.random());
-        const itemsToScan = shuffledItems.slice(0, 6);
-
-        if (itemsToScan.length < 1) {
-            setConversation(prev => ({ ...prev, step: 'ready' }));
-            return;
-        }
-
-        setScannableItems([...itemsToScan, ...itemsToScan, ...itemsToScan]);
-        setConversation(prev => ({ ...prev, step: 'scanning' }));
-        setIsScanning(true);
-        setCurrentItemIndex(itemsToScan.length);
     };
 
-    useEffect(() => {
-        if (!isScanning) return;
-
-        const realItemCount = scannableItems.length / 3;
-        if (currentItemIndex >= realItemCount * 2) return;
-
-        const currentItem = scannableItems[currentItemIndex];
-        if (!currentItem) return;
-
-        const fetchComment = async () => {
-            setSnarkyComment('');
-            try {
-                const response = await fetch('/api/get-roast-data', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ trackName: currentItem.name, artistName: currentItem.artist }),
-                });
-                const data = await response.json();
-                setSnarkyComment(data.comment || "i'm speechless. and not in a good way.");
-            } catch (e) {
-                setSnarkyComment('is this supposed to be good?');
-            }
-        };
-
-        fetchComment();
-    }, [isScanning, currentItemIndex, scannableItems]);
-
-    const handleInitialFetch = async () => {
+    const handleStartAnalysis = async () => {
+        setStep('fetching');
         setIsLoading(true);
         setError(null);
+
         try {
-            const response = await fetch('/api/get-roast-data');
-            const data = await response.json();
-            if (data.error) {
-                setError(data.error);
-            } else {
-                setConversation(prev => ({ ...prev, roastData: data }));
-                startScanner(data);
+            // Fetch Spotify data
+            const spotifyResponse = await fetch('/api/get-roast-data');
+            const spotifyData = await spotifyResponse.json();
+
+            if (spotifyData.error) {
+                setError(spotifyData.error);
+                return;
             }
+
+            setRoastData(spotifyData);
+
+            // Prepare tracks for scanning
+            const topTracks = spotifyData.topTracks?.items || [];
+            const recentlyPlayed = spotifyData.recentlyPlayed?.items || [];
+
+            const validItems = [...topTracks, ...recentlyPlayed.map((item: any) => item.track)]
+                .map((item: any) => ({
+                    name: item.name,
+                    artist: item.artists?.[0]?.name || 'Unknown Artist',
+                    imageUrl: item.album?.images?.[0]?.url || '',
+                }))
+                .filter(item => item.imageUrl);
+
+            const uniqueItems = Array.from(
+                new Map(validItems.map(item => [item.imageUrl, item])).values()
+            );
+            const shuffledItems = uniqueItems.sort(() => 0.5 - Math.random());
+            const itemsToScan = shuffledItems.slice(0, 8);
+
+            // Generate scanning comments with track data
+            const scanningResponse = await fetch('/api/get-roast-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'scanning',
+                    roastData: spotifyData,
+                    tracksToScan: itemsToScan
+                }),
+            });
+            const scanningData = await scanningResponse.json();
+
+            // Generate complete roast experience
+            const roastResponse = await fetch('/api/get-roast-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'complete_roast', roastData: spotifyData }),
+            });
+            const roastExperience = await roastResponse.json();
+
+            setRoastExperience(roastExperience);
+            startScanner(itemsToScan, scanningData.scanningComments);
+
         } catch (err) {
             setError("failed to fetch your spotify data.");
         } finally {
@@ -157,48 +148,87 @@ export default function SuccessPage() {
         }
     };
 
-    const handleChoice = async (value: string) => {
-        setIsLoading(true);
-        setError(null);
-
-        const payload = {
-            step: conversation.step,
-            choice: value,
-            type: conversation.type,
-            roastData: conversation.roastData,
-            conversationHistory: conversation.conversationHistory,
-            currentQuestionIndex: conversation.currentQuestionIndex,
-            questionId: conversation.questionId,
-            botMessage: conversation.botMessage,
-        };
-
-        try {
-            const response = await fetch('/api/get-roast-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
-            const data = await response.json();
-
-            if (data.error) {
-                setError(data.error);
-            } else {
-                setConversation(prev => ({
-                    ...prev,
-                    step: data.nextStep,
-                    botMessage: data.botMessage,
-                    choices: data.choices || [],
-                    type: data.type || 'mcq',
-                    conversationHistory: data.conversationHistory || prev.conversationHistory,
-                    currentQuestionIndex: data.currentQuestionIndex ?? prev.currentQuestionIndex,
-                    questionId: data.questionId,
-                }));
-            }
-        } catch (err) {
-            setError("failed to get response from clanker.");
-        } finally {
-            setIsLoading(false);
+    const startScanner = (items: any[], comments: string[]) => {
+        if (items.length < 1) {
+            setStep('ready');
+            return;
         }
+
+        // Combine items with comments
+        const scannableData = items.map((item, index) => ({
+            ...item,
+            comment: comments[index] || "scanning..."
+        }));
+
+        setScannableItems([...scannableData, ...scannableData, ...scannableData]);
+        setStep('scanning');
+        setIsScanning(true);
+        setCurrentItemIndex(0);
+    };
+
+    useEffect(() => {
+        if (!isScanning || scannableItems.length === 0) return;
+
+        const realItemCount = scannableItems.length / 3;
+        const intervalDuration = 2500;
+
+        const interval = setInterval(() => {
+            setCurrentItemIndex(prev => {
+                const next = prev + 1;
+                if (next >= realItemCount * 2) {
+                    setIsScanning(false);
+                    const finalScrollAmount = (prev * 272);
+                    const finalTx = `translateX(calc(-128px - ${finalScrollAmount}px))`;
+                    setFinalTransform(finalTx);
+
+                    setTimeout(() => {
+                        setStep('ready');
+                    }, 2000);
+                    return prev;
+                }
+                return next;
+            });
+        }, intervalDuration);
+
+        return () => clearInterval(interval);
+    }, [isScanning, scannableItems.length]);
+
+    const getSliderResponseKey = (value: number): string => {
+        if (value <= 25) return "0-25";
+        if (value <= 50) return "26-50";
+        if (value <= 75) return "51-75";
+        return "76-100";
+    };
+
+    const handleChoice = (value: string) => {
+        const currentQuestion = roastExperience?.questions[currentQuestionIndex];
+        if (!currentQuestion) return;
+
+        // Get the response for this choice
+        let responseKey = value;
+        if (currentQuestion.type === 'slider') {
+            responseKey = getSliderResponseKey(parseInt(value));
+        }
+
+        const response = currentQuestion.responses[responseKey] || currentQuestion.responses[value] || "";
+
+        const newAnswers = [...userAnswers, value];
+        const newResponses = [...questionResponses, response];
+        setUserAnswers(newAnswers);
+        setQuestionResponses(newResponses);
+        setShowChoices(false);
+        setShowResponse(true);
+
+        // Auto-advance after showing response
+        setTimeout(() => {
+            if (currentQuestionIndex < (roastExperience?.questions.length || 0) - 1) {
+                setCurrentQuestionIndex(prev => prev + 1);
+                setShowResponse(false);
+                setSliderValue(50);
+            } else {
+                setStep('complete');
+            }
+        }, 3000);
     };
 
     const renderContent = () => {
@@ -209,7 +239,7 @@ export default function SuccessPage() {
             transition: { duration: 0.4 }
         };
 
-        if (status === 'loading' || (isLoading && conversation.step === 'initial')) {
+        if (status === 'loading') {
             return <Loading />;
         }
 
@@ -222,50 +252,73 @@ export default function SuccessPage() {
             );
         }
 
-        if (conversation.step === 'scanning') {
+        if (step === 'intro') {
+            return (
+                <motion.div key="intro" {...motionProps} className="flex flex-col items-center gap-6">
+                    <div className="p-6 bg-gray-800 rounded-lg text-center w-full max-w-3xl">
+                        {introMessage ? (
+                            <TypeAnimation
+                                sequence={[introMessage, 1000, () => setShowChoices(true)]}
+                                wrapper="p"
+                                speed={70}
+                                className="text-gray-200 text-lg"
+                                cursor={true}
+                            />
+                        ) : (
+                            <p className="text-gray-300 animate-pulse">...</p>
+                        )}
+                    </div>
+                    {showChoices && (
+                        <button
+                            onClick={handleStartAnalysis}
+                            className="px-8 py-3 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                        >
+                            analyze my taste
+                        </button>
+                    )}
+                </motion.div>
+            );
+        }
+
+        if (step === 'fetching') {
+            return (
+                <motion.div key="fetching" {...motionProps}>
+                    <Loading />
+                </motion.div>
+            );
+        }
+
+        if (step === 'scanning') {
             const itemWidth = 256;
             const gap = 16;
             const scrollAmount = (currentItemIndex * (itemWidth + gap));
 
-            const handleTypingDone = () => {
-                const realItemCount = scannableItems.length / 3;
-                const nextItemIndex = currentItemIndex + 1;
-
-                if (nextItemIndex >= realItemCount * 2) {
-                    setIsScanning(false);
-                    const finalScrollAmount = (currentItemIndex * (itemWidth + gap));
-                    const finalTx = `translateX(calc(-${itemWidth / 2}px - ${finalScrollAmount}px))`;
-                    setFinalTransform(finalTx);
-
-                    setTimeout(() => {
-                        setConversation(prev => ({ ...prev, step: 'ready' }));
-                    }, 2000);
-                } else {
-                    setCurrentItemIndex(nextItemIndex);
-                }
-            };
-
             return (
-                <motion.div key="scanning" {...motionProps} className="relative w-full h-80 overflow-hidden">
-                    <div className="absolute inset-0 z-10 w-full flex items-center justify-center pointer-events-none">
-                        <div className="absolute bottom-0 mb-4 w-full max-w-lg min-h-[4rem] p-2 bg-gray-800 rounded-lg flex items-center justify-center">
-                            {snarkyComment ? (
+                <motion.div key="scanning" {...motionProps} className="relative w-full h-96 overflow-hidden">
+                    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20">
+                        <h2 className="text-xl font-semibold text-green-500">scanning your music history</h2>
+                    </div>
+
+                    <div className="absolute inset-0 z-10 w-full flex items-end justify-center pointer-events-none">
+                        <div className="absolute bottom-0 mb-4 w-full max-w-lg min-h-[4rem] p-3 bg-gray-800 rounded-lg flex items-center justify-center">
+                            {scannableItems[currentItemIndex] ? (
                                 <TypeAnimation
-                                    key={snarkyComment}
-                                    sequence={[snarkyComment, 1000, handleTypingDone]}
+                                    key={`${currentItemIndex}-${scannableItems[currentItemIndex]?.comment}`}
+                                    sequence={[scannableItems[currentItemIndex].comment]}
                                     wrapper="p"
                                     speed={80}
                                     className="text-center text-gray-200 text-sm"
                                     cursor={false}
                                 />
                             ) : (
-                                <p className="text-center text-gray-300 text-sm animate-pulse">...</p>
+                                <p className="text-center text-gray-300 text-sm animate-pulse">scanning...</p>
                             )}
                         </div>
                     </div>
+
                     <div
                         ref={scannerRef}
-                        className="absolute top-8 left-1/2 flex items-center gap-4"
+                        className="absolute top-16 left-1/2 flex items-center gap-4"
                         style={{
                             transform: isScanning ? `translateX(calc(-${itemWidth / 2}px - ${scrollAmount}px))` : finalTransform,
                             transition: isScanning ? 'transform 2.5s cubic-bezier(0.65, 0, 0.35, 1)' : 'transform 0.5s ease-out',
@@ -299,61 +352,49 @@ export default function SuccessPage() {
             );
         }
 
-        if (conversation.step === 'ready') {
+        if (step === 'ready') {
             return (
-                <motion.div key="ready" {...motionProps} className="flex flex-col items-center">
-                    <p className="mt-8 text-lg text-gray-300">
-                        alright, ive seen your data. ready to face the music?
-                    </p>
-                    <button
-                        onClick={() => handleChoice('start')}
-                        disabled={isLoading}
-                        className="mt-6 px-6 py-3 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 disabled:bg-gray-500 transition-colors"
-                    >
-                        {isLoading ? 'thinking of a good one...' : 'roast me!'}
-                    </button>
-                </motion.div>
-            );
-        }
-
-        if (conversation.step === 'complete') {
-            return (
-                <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6">
-                    <div className="p-6 bg-gray-800 rounded-lg text-center text-lg w-full max-w-3xl shadow-md">
-                        <p className="text-gray-200 whitespace-pre-wrap">{conversation.botMessage}</p>
+                <motion.div key="ready" {...motionProps} className="flex flex-col items-center gap-6">
+                    <div className="p-6 bg-gray-800 rounded-lg text-center w-full max-w-3xl">
+                        <TypeAnimation
+                            sequence={[roastExperience?.introMessage || "alright, i've seen enough. ready to get roasted?", 1000, () => setShowChoices(true)]}
+                            wrapper="p"
+                            speed={70}
+                            className="text-gray-200 text-lg"
+                            cursor={true}
+                        />
                     </div>
-                    <div className="flex flex-col items-center gap-4">
-                        <p className="text-gray-400 text-sm">
-                            conversation complete. questions answered: {conversation.conversationHistory.length}
-                        </p>
+                    {showChoices && (
                         <button
-                            onClick={() => window.location.reload()}
-                            className="px-6 py-2 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                            onClick={() => setStep('questions')}
+                            className="px-8 py-3 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
                         >
-                            roast me again
+                            let&apos;s do this
                         </button>
-                    </div>
+                    )}
                 </motion.div>
             );
         }
 
-        if (conversation.botMessage) {
-            const hasImageChoices = conversation.choices.some(c => c.imageUrl);
+        if (step === 'questions' && roastExperience) {
+            const currentQuestion = roastExperience.questions[currentQuestionIndex];
+            if (!currentQuestion) {
+                setStep('complete');
+                return null;
+            }
+
+            const hasImageChoices = currentQuestion.choices.some(c => c.imageUrl);
 
             const onTypingDone = () => {
-                if (conversation.step === 'typing_intro') {
-                    handleChoice('continue');
-                } else {
-                    setShowChoices(true);
-                }
+                setShowChoices(true);
             };
 
             return (
-                <motion.div key="conversation" {...motionProps} className="w-full max-w-4xl flex flex-col items-center gap-6">
+                <motion.div key={`question-${currentQuestionIndex}`} {...motionProps} className="w-full max-w-4xl flex flex-col items-center gap-6">
                     <div className="p-4 bg-gray-800 rounded-lg text-center text-lg w-full min-h-[6rem] flex items-center justify-center">
                         <TypeAnimation
-                            key={conversation.botMessage}
-                            sequence={[conversation.botMessage || '', 500, onTypingDone]}
+                            key={currentQuestion.question}
+                            sequence={[currentQuestion.question, 500, onTypingDone]}
                             wrapper="p"
                             speed={70}
                             className="whitespace-pre-wrap text-gray-200"
@@ -361,9 +402,24 @@ export default function SuccessPage() {
                         />
                     </div>
 
-                    {isLoading && <div className="mt-6 text-gray-400">...</div>}
+                    {/* Show response after user answers */}
+                    {showResponse && questionResponses[currentQuestionIndex] && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-gray-900 rounded-lg border border-green-500/30 w-full"
+                        >
+                            <TypeAnimation
+                                sequence={[questionResponses[currentQuestionIndex]]}
+                                wrapper="p"
+                                speed={70}
+                                className="text-gray-200 whitespace-pre-wrap"
+                                cursor={false}
+                            />
+                        </motion.div>
+                    )}
 
-                    {!isLoading && showChoices && conversation.type === 'slider' && conversation.choices.length === 2 && (
+                    {showChoices && !showResponse && currentQuestion.type === 'slider' && (
                         <div className="flex flex-col items-center gap-6 w-full pt-4">
                             <p className="text-8xl font-black text-green-500 tabular-nums" style={{ textShadow: '0 0 25px rgba(29, 185, 84, 0.4)' }}>
                                 {sliderValue}
@@ -378,22 +434,22 @@ export default function SuccessPage() {
                                     className="w-full h-4 bg-gray-700 rounded-full appearance-none cursor-pointer accent-green-500"
                                 />
                                 <div className="flex justify-between text-sm text-gray-400 mt-2">
-                                    <span className="w-2/5 text-left">{conversation.choices[0].text}</span>
-                                    <span className="w-2/5 text-right">{conversation.choices[1].text}</span>
+                                    <span className="w-2/5 text-left">{currentQuestion.choices[0]?.text}</span>
+                                    <span className="w-2/5 text-right">{currentQuestion.choices[1]?.text}</span>
                                 </div>
                             </div>
                             <button
                                 onClick={() => handleChoice(sliderValue.toString())}
                                 className="px-12 py-4 text-xl font-bold text-black rounded-full bg-green-500 shadow-lg hover:shadow-green-500/30 transform hover:scale-105 transition-all duration-300"
                             >
-                                submit judgment
+                                submit
                             </button>
                         </div>
                     )}
 
-                    {!isLoading && showChoices && conversation.type !== 'slider' && conversation.choices.length > 0 && (
+                    {showChoices && !showResponse && currentQuestion.type !== 'slider' && (
                         <div className={`mt-6 flex justify-center gap-4 ${hasImageChoices ? 'flex-row flex-wrap items-baseline' : 'flex-col sm:flex-row'}`}>
-                            {conversation.choices.map((choice, index) => (
+                            {currentQuestion.choices.map((choice, index) => (
                                 hasImageChoices ? (
                                     <div
                                         key={choice.value}
@@ -421,7 +477,7 @@ export default function SuccessPage() {
                                     <button
                                         key={choice.value}
                                         onClick={() => handleChoice(choice.value)}
-                                        className="px-5 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 disabled:bg-gray-800 transition-colors"
+                                        className="px-5 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors"
                                         style={{ animation: `fadeInUp 0.5s ease-out ${index * 100}ms both` }}
                                     >
                                         {choice.text}
@@ -430,6 +486,34 @@ export default function SuccessPage() {
                             ))}
                         </div>
                     )}
+                </motion.div>
+            );
+        }
+
+        if (step === 'complete' && roastExperience) {
+            return (
+                <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-4xl">
+                    <div className="space-y-4 w-full">
+                        {questionResponses.map((roast, index) => (
+                            <div key={index} className="p-4 bg-gray-800 rounded-lg">
+                                <p className="text-gray-200 whitespace-pre-wrap">{roast}</p>
+                            </div>
+                        ))}
+                        <div className="p-6 bg-gray-900 rounded-lg border border-green-500/30">
+                            <p className="text-gray-200 whitespace-pre-wrap text-lg font-medium">{roastExperience.finalVerdict}</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-gray-400 text-sm">
+                            roast complete. hope you learned something about yourself.
+                        </p>
+                        <Link
+                            href="/dashboard"
+                            className="px-6 py-2 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                        >
+                            go to dashboard
+                        </Link>
+                    </div>
                 </motion.div>
             );
         }
@@ -452,7 +536,7 @@ export default function SuccessPage() {
                 }
             `}</style>
             <div className="flex flex-col items-center justify-center text-center gap-8 w-full flex-1">
-                {conversation.step !== 'complete' && session?.user?.name && (
+                {step !== 'complete' && session?.user?.name && (
                     <h1 className="text-4xl font-bold text-white">
                         welcome, <span className="font-bold text-green-500">{session.user.name}</span>
                     </h1>
