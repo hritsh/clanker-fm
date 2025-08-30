@@ -23,10 +23,11 @@ type Conversation = {
     step: string;
     botMessage: string | null;
     choices: Choice[];
-    history: any[];
     roastData: any | null;
-    type?: 'slider' | 'default';
-    questionQueue?: string[];
+    type?: 'slider' | 'image_choice' | 'mcq';
+    conversationHistory: any[];
+    currentQuestionIndex: number;
+    questionId?: string;
 };
 
 export default function SuccessPage() {
@@ -35,9 +36,9 @@ export default function SuccessPage() {
         step: 'initial',
         botMessage: null,
         choices: [],
-        history: [],
         roastData: null,
-        questionQueue: [],
+        conversationHistory: [],
+        currentQuestionIndex: 0,
     });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -51,28 +52,24 @@ export default function SuccessPage() {
     const scannerRef = useRef<HTMLDivElement>(null);
     const [finalTransform, setFinalTransform] = useState<string | undefined>(undefined);
 
-    // Redirect if not authenticated
     useEffect(() => {
         if (status === 'unauthenticated') {
             redirect('/login');
         }
     }, [status]);
 
-    // Handle initial data fetching
     useEffect(() => {
         if (status === 'authenticated' && conversation.step === 'initial') {
             handleInitialFetch();
         }
     }, [status, conversation.step]);
 
-    // Show choices after bot message finishes typing
     useEffect(() => {
         if (conversation.botMessage) {
             setShowChoices(false);
         }
     }, [conversation.botMessage]);
 
-    // Preload images
     useEffect(() => {
         const choicesWithImages = conversation.choices.filter(c => c.imageUrl);
         if (choicesWithImages.length > 0) {
@@ -114,7 +111,6 @@ export default function SuccessPage() {
         setCurrentItemIndex(itemsToScan.length);
     };
 
-    // Fetch snarky comments while scanning
     useEffect(() => {
         if (!isScanning) return;
 
@@ -133,18 +129,13 @@ export default function SuccessPage() {
                     body: JSON.stringify({ trackName: currentItem.name, artistName: currentItem.artist }),
                 });
                 const data = await response.json();
-                if (data.comment) {
-                    setSnarkyComment(data.comment);
-                } else {
-                    setSnarkyComment("I'm speechless. And not in a good way.");
-                }
+                setSnarkyComment(data.comment || "i'm speechless. and not in a good way.");
             } catch (e) {
-                setSnarkyComment('Is this supposed to be good?');
+                setSnarkyComment('is this supposed to be good?');
             }
         };
 
         fetchComment();
-
     }, [isScanning, currentItemIndex, scannableItems]);
 
     const handleInitialFetch = async () => {
@@ -160,7 +151,7 @@ export default function SuccessPage() {
                 startScanner(data);
             }
         } catch (err) {
-            setError("Failed to fetch your Spotify data.");
+            setError("failed to fetch your spotify data.");
         } finally {
             setIsLoading(false);
         }
@@ -175,8 +166,10 @@ export default function SuccessPage() {
             choice: value,
             type: conversation.type,
             roastData: conversation.roastData,
-            history: conversation.history,
-            questionQueue: conversation.questionQueue,
+            conversationHistory: conversation.conversationHistory,
+            currentQuestionIndex: conversation.currentQuestionIndex,
+            questionId: conversation.questionId,
+            botMessage: conversation.botMessage,
         };
 
         try {
@@ -195,13 +188,14 @@ export default function SuccessPage() {
                     step: data.nextStep,
                     botMessage: data.botMessage,
                     choices: data.choices || [],
-                    history: [...prev.history, { user: value, bot: data.botMessage }],
-                    type: data.type || 'default',
-                    questionQueue: data.questionQueue || [],
+                    type: data.type || 'mcq',
+                    conversationHistory: data.conversationHistory || prev.conversationHistory,
+                    currentQuestionIndex: data.currentQuestionIndex ?? prev.currentQuestionIndex,
+                    questionId: data.questionId,
                 }));
             }
         } catch (err) {
-            setError("Failed to get response from RoastBot.");
+            setError("failed to get response from clanker.");
         } finally {
             setIsLoading(false);
         }
@@ -222,7 +216,7 @@ export default function SuccessPage() {
         if (error) {
             return (
                 <motion.div key="error" {...motionProps} className="mt-8 p-4 bg-gray-800 border border-red-500/50 rounded-lg text-left text-sm max-w-4xl w-full">
-                    <p className="font-bold text-red-400">Error:</p>
+                    <p className="font-bold text-red-400">error:</p>
                     <p className="mt-2 text-gray-300">{error}</p>
                 </motion.div>
             );
@@ -252,21 +246,13 @@ export default function SuccessPage() {
             };
 
             return (
-                <motion.div
-                    key="scanning"
-                    {...motionProps}
-                    className="relative w-full h-80 overflow-hidden"
-                >
+                <motion.div key="scanning" {...motionProps} className="relative w-full h-80 overflow-hidden">
                     <div className="absolute inset-0 z-10 w-full flex items-center justify-center pointer-events-none">
                         <div className="absolute bottom-0 mb-4 w-full max-w-lg min-h-[4rem] p-2 bg-gray-800 rounded-lg flex items-center justify-center">
                             {snarkyComment ? (
                                 <TypeAnimation
                                     key={snarkyComment}
-                                    sequence={[
-                                        snarkyComment,
-                                        1000,
-                                        handleTypingDone
-                                    ]}
+                                    sequence={[snarkyComment, 1000, handleTypingDone]}
                                     wrapper="p"
                                     speed={80}
                                     className="text-center text-gray-200 text-sm"
@@ -317,14 +303,14 @@ export default function SuccessPage() {
             return (
                 <motion.div key="ready" {...motionProps} className="flex flex-col items-center">
                     <p className="mt-8 text-lg text-gray-300">
-                        Alright, Ive seen your data. Ready to face the music?
+                        alright, ive seen your data. ready to face the music?
                     </p>
                     <button
                         onClick={() => handleChoice('start')}
                         disabled={isLoading}
                         className="mt-6 px-6 py-3 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 disabled:bg-gray-500 transition-colors"
                     >
-                        {isLoading ? 'Thinking of a good one...' : 'Roast Me!'}
+                        {isLoading ? 'thinking of a good one...' : 'roast me!'}
                     </button>
                 </motion.div>
             );
@@ -332,8 +318,21 @@ export default function SuccessPage() {
 
         if (conversation.step === 'complete') {
             return (
-                <motion.div key="complete" {...motionProps} className="p-6 bg-gray-800 rounded-lg text-center text-xl w-full max-w-3xl shadow-md">
-                    <p className="text-gray-200">{conversation.botMessage}</p>
+                <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6">
+                    <div className="p-6 bg-gray-800 rounded-lg text-center text-lg w-full max-w-3xl shadow-md">
+                        <p className="text-gray-200 whitespace-pre-wrap">{conversation.botMessage}</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-4">
+                        <p className="text-gray-400 text-sm">
+                            conversation complete. questions answered: {conversation.conversationHistory.length}
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="px-6 py-2 bg-green-500 text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors"
+                        >
+                            roast me again
+                        </button>
+                    </div>
                 </motion.div>
             );
         }
@@ -343,7 +342,7 @@ export default function SuccessPage() {
 
             const onTypingDone = () => {
                 if (conversation.step === 'typing_intro') {
-                    handleChoice('next');
+                    handleChoice('continue');
                 } else {
                     setShowChoices(true);
                 }
@@ -354,11 +353,7 @@ export default function SuccessPage() {
                     <div className="p-4 bg-gray-800 rounded-lg text-center text-lg w-full min-h-[6rem] flex items-center justify-center">
                         <TypeAnimation
                             key={conversation.botMessage}
-                            sequence={[
-                                conversation.botMessage || '',
-                                500,
-                                onTypingDone
-                            ]}
+                            sequence={[conversation.botMessage || '', 500, onTypingDone]}
                             wrapper="p"
                             speed={70}
                             className="whitespace-pre-wrap text-gray-200"
@@ -369,11 +364,8 @@ export default function SuccessPage() {
                     {isLoading && <div className="mt-6 text-gray-400">...</div>}
 
                     {!isLoading && showChoices && conversation.type === 'slider' && conversation.choices.length === 2 && (
-                        <div className="flex flex-col items-center gap-6 w-full pt-4 animate-fade-in-up" style={{ opacity: 0 }}>
-                            <p
-                                className="text-8xl font-black text-green-500 tabular-nums"
-                                style={{ textShadow: '0 0 25px rgba(29, 185, 84, 0.4)' }}
-                            >
+                        <div className="flex flex-col items-center gap-6 w-full pt-4">
+                            <p className="text-8xl font-black text-green-500 tabular-nums" style={{ textShadow: '0 0 25px rgba(29, 185, 84, 0.4)' }}>
                                 {sliderValue}
                             </p>
                             <div className="w-full max-w-md">
@@ -394,7 +386,7 @@ export default function SuccessPage() {
                                 onClick={() => handleChoice(sliderValue.toString())}
                                 className="px-12 py-4 text-xl font-bold text-black rounded-full bg-green-500 shadow-lg hover:shadow-green-500/30 transform hover:scale-105 transition-all duration-300"
                             >
-                                Submit Judgment
+                                submit judgment
                             </button>
                         </div>
                     )}
@@ -405,8 +397,8 @@ export default function SuccessPage() {
                                 hasImageChoices ? (
                                     <div
                                         key={choice.value}
-                                        className="flex flex-col items-center gap-2 animate-fade-in-up"
-                                        style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+                                        className="flex flex-col items-center gap-2"
+                                        style={{ animation: `fadeInUp 0.5s ease-out ${index * 100}ms both` }}
                                     >
                                         {choice.imageUrl ? (
                                             <img
@@ -420,7 +412,7 @@ export default function SuccessPage() {
                                                 className="w-40 h-40 bg-gray-700 rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all flex items-center justify-center text-center p-2"
                                                 onClick={() => handleChoice(choice.value)}
                                             >
-                                                <span>No Cover Art</span>
+                                                <span>no cover art</span>
                                             </div>
                                         )}
                                         <p className="text-xs text-center w-40 text-gray-300">{choice.text}</p>
@@ -429,8 +421,8 @@ export default function SuccessPage() {
                                     <button
                                         key={choice.value}
                                         onClick={() => handleChoice(choice.value)}
-                                        className="px-5 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 disabled:bg-gray-800 transition-colors animate-fade-in-up"
-                                        style={{ animationDelay: `${index * 100}ms`, opacity: 0 }}
+                                        className="px-5 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 disabled:bg-gray-800 transition-colors"
+                                        style={{ animation: `fadeInUp 0.5s ease-out ${index * 100}ms both` }}
                                     >
                                         {choice.text}
                                     </button>
@@ -447,10 +439,22 @@ export default function SuccessPage() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-black to-gray-900">
+            <style jsx>{`
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `}</style>
             <div className="flex flex-col items-center justify-center text-center gap-8 w-full flex-1">
                 {conversation.step !== 'complete' && session?.user?.name && (
                     <h1 className="text-4xl font-bold text-white">
-                        Welcome, <span className="font-bold text-green-500">{session.user.name}</span>
+                        welcome, <span className="font-bold text-green-500">{session.user.name}</span>
                     </h1>
                 )}
                 <AnimatePresence mode="wait">
