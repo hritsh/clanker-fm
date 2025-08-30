@@ -8,6 +8,15 @@ import Loading from '../../components/Loading';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
+// Timing and animation constants
+const SCANNING_CONSTANTS = {
+    ITEM_DISPLAY_DURATION: 4000, // Total time per item (ms)
+    TRANSITION_DURATION: 3000, // Album cover transition duration (ms)
+    COMMENT_DELAY: 3200, // Delay before showing comment (ms) - slightly after transition
+    TYPING_SPEED: 90, // Comment typing speed
+    FINAL_TRANSITION_DELAY: 1500, // Delay before moving to next step (ms)
+};
+
 type Choice = {
     text: string;
     value: string;
@@ -56,9 +65,12 @@ export default function SuccessPage() {
     const [isScanning, setIsScanning] = useState(false);
     const [scanningComments, setScanningComments] = useState<string[]>([]);
     const [scanningCommentsLoaded, setScanningCommentsLoaded] = useState(false);
-    const [shouldStopScanning, setShouldStopScanning] = useState(false);
+    const [hasCompletedFirstCycle, setHasCompletedFirstCycle] = useState(false);
     const scannerRef = useRef<HTMLDivElement>(null);
     const [finalTransform, setFinalTransform] = useState<string | undefined>(undefined);
+    const [totalCyclesShown, setTotalCyclesShown] = useState(0);
+    const [currentComment, setCurrentComment] = useState('');
+    const [showComment, setShowComment] = useState(false);
 
     const defaultScanningComments = [
         "scanning your atrocious taste...",
@@ -162,9 +174,6 @@ export default function SuccessPage() {
             setScanningCommentsLoaded(true);
             setRoastExperience(roastExperience);
 
-            // Signal that we should stop scanning soon
-            setShouldStopScanning(true);
-
         } catch (err) {
             setError("failed to fetch your spotify data.");
         } finally {
@@ -178,16 +187,18 @@ export default function SuccessPage() {
             return;
         }
 
-        // Combine items with comments
+        // Create exactly 3 cycles of items
         const scannableData = items.map((item, index) => ({
             ...item,
             comment: comments[index] || "scanning..."
         }));
 
-        setScannableItems([...scannableData, ...scannableData, ...scannableData]);
+        const tripleItems = [...scannableData, ...scannableData, ...scannableData];
+        setScannableItems(tripleItems);
         setStep('scanning');
         setIsScanning(true);
         setCurrentItemIndex(0);
+        setTotalCyclesShown(0);
     };
 
     // Update scanning comments when they load
@@ -206,14 +217,29 @@ export default function SuccessPage() {
         if (!isScanning || scannableItems.length === 0) return;
 
         const realItemCount = scannableItems.length / 3;
-        const intervalDuration = 4000; // Increased to allow comments to finish
 
         const interval = setInterval(() => {
             setCurrentItemIndex(prev => {
                 const next = prev + 1;
+                const cyclePosition = next % realItemCount;
+                const cycleNumber = Math.floor(next / realItemCount);
 
-                // Stop scanning if we have the roast data and we've shown at least 6 items
-                if (shouldStopScanning && roastExperience && next >= 6) {
+                // Update cycles shown
+                if (cyclePosition === 0 && next > 0) {
+                    setTotalCyclesShown(cycleNumber);
+                }
+
+                // Check if we should stop
+                const shouldStop = (
+                    // At least one full cycle complete
+                    totalCyclesShown >= 1 &&
+                    // Have the roast data ready
+                    scanningCommentsLoaded &&
+                    roastExperience &&
+                    next > realItemCount
+                );
+
+                if (shouldStop) {
                     setIsScanning(false);
                     const finalScrollAmount = (prev * 272);
                     const finalTx = `translateX(calc(-128px - ${finalScrollAmount}px))`;
@@ -221,12 +247,12 @@ export default function SuccessPage() {
 
                     setTimeout(() => {
                         setStep('ready');
-                    }, 1500);
+                    }, SCANNING_CONSTANTS.FINAL_TRANSITION_DELAY);
                     return prev;
                 }
 
-                // Default stop condition if we reach the end
-                if (next >= realItemCount * 2) {
+                // Fallback stop condition - prevent infinite loop
+                if (next >= realItemCount * 3) {
                     setIsScanning(false);
                     const finalScrollAmount = (prev * 272);
                     const finalTx = `translateX(calc(-128px - ${finalScrollAmount}px))`;
@@ -234,15 +260,36 @@ export default function SuccessPage() {
 
                     setTimeout(() => {
                         setStep('ready');
-                    }, 1500);
+                    }, SCANNING_CONSTANTS.FINAL_TRANSITION_DELAY);
                     return prev;
                 }
+
                 return next;
             });
-        }, intervalDuration);
+        }, SCANNING_CONSTANTS.ITEM_DISPLAY_DURATION);
 
         return () => clearInterval(interval);
-    }, [isScanning, scannableItems.length, shouldStopScanning, roastExperience]);
+    }, [isScanning, scannableItems.length, totalCyclesShown, scanningCommentsLoaded, roastExperience]);
+
+    // Separate effect to handle comment updates with delay
+    useEffect(() => {
+        if (!isScanning || scannableItems.length === 0) return;
+
+        // Reset comment display immediately
+        setShowComment(false);
+        setCurrentComment('');
+
+        // Set up delayed comment display - much shorter delay
+        const commentTimeout = setTimeout(() => {
+            const currentItem = scannableItems[currentItemIndex];
+            if (currentItem) {
+                setCurrentComment(currentItem.comment);
+                setShowComment(true);
+            }
+        }, 500); // Much shorter delay - only 500ms instead of 3200ms
+
+        return () => clearTimeout(commentTimeout);
+    }, [currentItemIndex, isScanning, scannableItems]);
 
     const getSliderResponseKey = (value: number): string => {
         if (value <= 25) return "0-25";
@@ -310,7 +357,7 @@ export default function SuccessPage() {
                             <TypeAnimation
                                 sequence={[introMessage, 1000, () => setShowChoices(true)]}
                                 wrapper="p"
-                                speed={70}
+                                speed={80}
                                 className="text-gray-200 text-lg"
                                 cursor={true}
                             />
@@ -351,17 +398,17 @@ export default function SuccessPage() {
 
                     <div className="absolute inset-0 z-10 w-full flex items-end justify-center pointer-events-none">
                         <div className="absolute bottom-0 mb-4 w-full max-w-2xl min-h-[6rem] p-4 bg-gray-800 rounded-lg flex items-center justify-center">
-                            {scannableItems[currentItemIndex] ? (
+                            {showComment && currentComment ? (
                                 <TypeAnimation
-                                    key={`${currentItemIndex}-${scannableItems[currentItemIndex]?.comment}`}
-                                    sequence={[scannableItems[currentItemIndex].comment]}
+                                    key={`comment-${currentItemIndex}`}
+                                    sequence={[currentComment]}
                                     wrapper="p"
-                                    speed={50}
+                                    speed={80}
                                     className="text-center text-gray-200 text-sm leading-relaxed"
                                     cursor={false}
                                 />
                             ) : (
-                                <p className="text-center text-gray-300 text-sm animate-pulse">scanning...</p>
+                                <div className="text-center text-gray-300 text-sm"></div>
                             )}
                         </div>
                     </div>
@@ -371,7 +418,7 @@ export default function SuccessPage() {
                         className="absolute top-16 left-1/2 flex items-center gap-4"
                         style={{
                             transform: isScanning ? `translateX(calc(-${itemWidth / 2}px - ${scrollAmount}px))` : finalTransform,
-                            transition: isScanning ? 'transform 4s cubic-bezier(0.65, 0, 0.35, 1)' : 'transform 0.5s ease-out',
+                            transition: isScanning ? `transform ${SCANNING_CONSTANTS.TRANSITION_DURATION}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)` : 'transform 0.5s ease-out',
                         }}
                     >
                         {scannableItems.map((item, index) => {
@@ -409,7 +456,7 @@ export default function SuccessPage() {
                         <TypeAnimation
                             sequence={[roastExperience?.introMessage || "alright, i've seen enough. ready to get roasted?", 1000, () => setShowChoices(true)]}
                             wrapper="p"
-                            speed={70}
+                            speed={80}
                             className="text-gray-200 text-lg"
                             cursor={true}
                         />
@@ -427,13 +474,15 @@ export default function SuccessPage() {
         }
 
         if (step === 'questions' && roastExperience) {
-            const currentQuestion = roastExperience.questions[currentQuestionIndex];
-            if (!currentQuestion) {
+            const currentQuestion = roastExperience.questions?.[currentQuestionIndex];
+
+            // If no question or malformed question, skip to complete
+            if (!currentQuestion || !currentQuestion.choices || !Array.isArray(currentQuestion.choices)) {
                 setStep('complete');
                 return null;
             }
 
-            const hasImageChoices = currentQuestion.choices.some(c => c.imageUrl);
+            const hasImageChoices = currentQuestion.choices.some(c => c?.imageUrl);
 
             const onTypingDone = () => {
                 setShowChoices(true);
@@ -444,9 +493,9 @@ export default function SuccessPage() {
                     <div className="p-4 bg-gray-800 rounded-lg text-center text-lg w-full min-h-[6rem] flex items-center justify-center">
                         <TypeAnimation
                             key={currentQuestion.question}
-                            sequence={[currentQuestion.question, 500, onTypingDone]}
+                            sequence={[currentQuestion.question || "what's your favorite genre?", 500, onTypingDone]}
                             wrapper="p"
-                            speed={70}
+                            speed={80}
                             className="whitespace-pre-wrap text-gray-200"
                             cursor={true}
                         />
@@ -462,16 +511,16 @@ export default function SuccessPage() {
                             <TypeAnimation
                                 sequence={[
                                     questionResponses[currentQuestionIndex],
-                                    2000,
+                                    1000,
                                     () => {
-                                        // Auto-advance after 3 seconds
+                                        // Auto-advance after 1.5 seconds
                                         setTimeout(() => {
                                             handleNextQuestion();
-                                        }, 3000);
+                                        }, 1500);
                                     }
                                 ]}
                                 wrapper="p"
-                                speed={60}
+                                speed={80}
                                 className="text-gray-200 whitespace-pre-wrap"
                                 cursor={false}
                             />
@@ -493,8 +542,8 @@ export default function SuccessPage() {
                                     className="w-full h-4 bg-gray-700 rounded-full appearance-none cursor-pointer accent-green-500"
                                 />
                                 <div className="flex justify-between text-sm text-gray-400 mt-2">
-                                    <span className="w-2/5 text-left">{currentQuestion.choices[0]?.text}</span>
-                                    <span className="w-2/5 text-right">{currentQuestion.choices[1]?.text}</span>
+                                    <span className="w-2/5 text-left">{currentQuestion.choices[0]?.text || "not at all"}</span>
+                                    <span className="w-2/5 text-right">{currentQuestion.choices[1]?.text || "absolutely"}</span>
                                 </div>
                             </div>
                             <button
@@ -508,19 +557,21 @@ export default function SuccessPage() {
 
                     {showChoices && !showResponse && currentQuestion.type !== 'slider' && (
                         <div className={`mt-6 flex justify-center gap-4 ${hasImageChoices ? 'flex-row flex-wrap items-baseline' : 'flex-col sm:flex-row'}`}>
-                            {currentQuestion.choices.map((choice, index) => (
-                                hasImageChoices ? (
+                            {currentQuestion.choices.map((choice, index) => {
+                                if (!choice) return null;
+
+                                return hasImageChoices ? (
                                     <div
-                                        key={choice.value}
+                                        key={choice.value || index}
                                         className="flex flex-col items-center gap-2"
                                         style={{ animation: `fadeInUp 0.5s ease-out ${index * 100}ms both` }}
                                     >
                                         {choice.imageUrl ? (
                                             <img
                                                 src={choice.imageUrl}
-                                                alt={choice.text}
+                                                alt={choice.text || 'Choice'}
                                                 className="w-40 h-40 object-cover rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all"
-                                                onClick={() => handleChoice(choice.value)}
+                                                onClick={() => handleChoice(choice.value || index.toString())}
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement;
                                                     target.style.display = 'none';
@@ -531,43 +582,82 @@ export default function SuccessPage() {
                                         ) : null}
                                         <div
                                             className="w-40 h-40 bg-gray-700 rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all flex items-center justify-center text-center p-2"
-                                            onClick={() => handleChoice(choice.value)}
+                                            onClick={() => handleChoice(choice.value || index.toString())}
                                             style={{ display: choice.imageUrl ? 'none' : 'flex' }}
                                         >
                                             <span className="text-sm">no cover art</span>
                                         </div>
-                                        <p className="text-xs text-center w-40 text-gray-300">{choice.text}</p>
+                                        <p className="text-xs text-center w-40 text-gray-300">{choice.text || `Option ${index + 1}`}</p>
                                     </div>
                                 ) : (
                                     <button
-                                        key={choice.value}
-                                        onClick={() => handleChoice(choice.value)}
+                                        key={choice.value || index}
+                                        onClick={() => handleChoice(choice.value || index.toString())}
                                         className="px-5 py-2 bg-gray-700 text-gray-200 font-semibold rounded-lg hover:bg-gray-600 transition-colors"
                                         style={{ animation: `fadeInUp 0.5s ease-out ${index * 100}ms both` }}
                                     >
-                                        {choice.text}
+                                        {choice.text || `Option ${index + 1}`}
                                     </button>
-                                )
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </motion.div>
             );
         }
 
-        if (step === 'complete' && roastExperience) {
+        if (step === 'complete' && roastExperience && roastData) {
+            // Split the final verdict into smaller paragraphs for better readability
+            const verdictParagraphs = roastExperience.finalVerdict
+                .split(/(?<=\.)\s+(?=[A-Z])/g)
+                .filter(p => p.trim().length > 0);
+
+            // Get top album covers for display
+            const albumCovers = roastData.topTracks?.items
+                ?.slice(0, 6)
+                ?.map((track: any) => track.album?.images?.[0]?.url)
+                ?.filter(Boolean) || [];
+
             return (
                 <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-4xl">
+                    {/* Album covers display */}
+                    {albumCovers.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-3 mb-4">
+                            {albumCovers.map((cover: any, index: number) => (
+                                <motion.img
+                                    key={index}
+                                    src={cover}
+                                    alt="Album cover"
+                                    className="w-16 h-16 object-cover rounded-lg shadow-lg"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                />
+                            ))}
+                        </div>
+                    )}
+
                     <div className="space-y-4 w-full">
                         <div className="p-6 bg-gray-900 rounded-lg border border-red-500/30">
                             <h2 className="text-2xl font-bold text-red-400 mb-4 text-center">final verdict</h2>
-                            <TypeAnimation
-                                sequence={[roastExperience.finalVerdict]}
-                                wrapper="p"
-                                speed={50}
-                                className="text-gray-200 whitespace-pre-wrap text-lg leading-relaxed"
-                                cursor={false}
-                            />
+                            <div className="space-y-4">
+                                {verdictParagraphs.map((paragraph, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.5 }}
+                                    >
+                                        <TypeAnimation
+                                            sequence={[paragraph]}
+                                            wrapper="p"
+                                            speed={85}
+                                            className="text-gray-200 text-base leading-relaxed"
+                                            cursor={false}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                     <div className="flex flex-col items-center gap-4">
