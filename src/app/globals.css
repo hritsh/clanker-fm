@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@layer base {
+    :root {
+        --spotify-green: #1DB954;
+        --spotify-black: #191414;
+        --warm-off-white: #FBF9F1;
+        --cool-gray: #E5E1DA;
+        --text-color: #FFFFFF;
+    }
+
+    body {
+        @apply bg-[#191414] text-white;
+        font-family: 'Inter', sans-serif;
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    .animate-fade-in-up {
+        animation: fade-in-up 0.45s ease-out forwards;
+    }
+
+    @keyframes fade-in-up {
+        0% {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-scan {
+        animation: scroll 30s linear infinite;
+    }
+
+    @keyframes scroll {
+        from {
+            transform: translateX(0);
+        }
+
+        to {
+            transform: translateX(-100%);
+        }
+    }
+}
