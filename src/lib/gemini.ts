@@ -19,7 +19,8 @@ const cleanDataForAI = (roastData: any) => {
         artist: track.artists[0].name,
         album: track.album.name,
         popularity: track.popularity,
-        explicit: track.explicit
+        explicit: track.explicit,
+        imageUrl: track.album?.images?.[0]?.url || ''
     })) || [];
 
     const recentTracks = recentlyPlayed?.items?.slice(0, 8).map((item: any) => ({
@@ -58,13 +59,15 @@ tracks you're scanning (in order): ${JSON.stringify(tracksToScan)}
 
 personality: lowercase, dry, observational, self-aware bot
 
-for each track in the tracksToScan array, create a comment that references that specific track/artist. comments should be like:
-- "i'm seeing [track name] by [artist]... interesting choice"
-- "wow, [artist/track], really"
-- "[specific observation about this track/artist]"
-- include ONE positive/intrigued comment in opposite tone for one of the tracks
-- keep each comment 1-2 sentences max
-- make them feel like you're discovering each track in real time
+for each track in the tracksToScan array, create a longer comment (2-3 sentences) that references that specific track/artist when relevant, but focus on the critique. be more casual about it:
+- "of course you'd be into this pretentious indie garbage"
+- "let me guess, you think you're cultured because you listen to experimental stuff"
+- "this screams 'i peaked in high school' energy"
+- "bet you tell everyone about your 'unique' taste while playing the most basic stuff"
+- "actually not terrible. still won't admit that publicly though"
+- make them feel like judgmental observations about their character based on the music
+- be more brutal and specific about why this choice is questionable
+- don't always lead with the artist name, just critique naturally
 
 respond with ONLY a JSON array of strings (one for each track in order), no markdown formatting, no other text:
 ["comment for track 1", "comment for track 2", ...]
@@ -77,15 +80,15 @@ respond with ONLY a JSON array of strings (one for each track in order), no mark
     } catch (error) {
         console.error("Error generating scanning comments:", error);
         return tracksToScan.map((_, index) => [
-            "scanning your music history...",
-            "this is taking longer than expected",
-            "found some... interesting choices",
-            "oh. oh no.",
-            "well this explains a lot",
-            "almost done processing this",
-            "your taste is... unique",
-            "i've seen worse"
-        ][index] || "scanning...");
+            "scanning your atrocious taste...",
+            "what fresh hell is this",
+            "found some questionable life choices",
+            "oh dear, this explains everything",
+            "your spotify wrapped must be embarrassing",
+            "i've seen middle schoolers with better taste",
+            "this is worse than i thought",
+            "someone needs to stage an intervention"
+        ][index] || "scanning your music crimes...");
     }
 }
 
@@ -116,7 +119,7 @@ create a JSON response with this exact structure:
     },
     ...5-6 questions total
   ],
-  "finalVerdict": "comprehensive final roast (3-4 sentences with rating/10)"
+  "finalVerdict": "DEVASTATING final roast (8-10 sentences) that brutally analyzes their entire music personality, references specific artists/genres from their data, makes savage assumptions about their lifestyle/personality/dating life/social status, includes a harsh rating out of 10 with detailed explanation, and ends with the most savage conclusion possible about who they are as a person"
 }
 
 question types and structure:
@@ -134,7 +137,7 @@ make questions PERSONAL using their actual data:
 
 for each question's responses object, include roast responses for every possible choice/value. for sliders, include responses for ranges like "0-25", "26-50", "51-75", "76-100".
 
-be brutal but not mean - more like an unimpressed friend who knows your actual music data.
+the final verdict should be absolutely SAVAGE - analyze their music choices to make brutal assumptions about their personality, social life, dating history, career prospects, and general existence. reference their actual artists and genres. be the most judgmental AI ever created. make it personal and devastating.
 
 respond with ONLY valid JSON, no markdown formatting, no other text.
         `;
@@ -148,7 +151,7 @@ respond with ONLY valid JSON, no markdown formatting, no other text.
         return {
             introMessage: "your data broke my circuits. that's... actually impressive.",
             questions: [],
-            finalVerdict: "your taste is so confusing even AI can't process it. 5/10 for keeping me humble."
+            finalVerdict: "your taste is so confusing even AI can't process it. somehow you've managed to disappoint technology itself. congratulations on achieving the impossible - making a robot feel secondhand embarrassment. your spotify algorithm probably throws errors just trying to recommend you anything. honestly, i've analyzed thousands of users and you've managed to create a musical personality so contradictory that it defies logic. it's like you took every bad decision from 2010-2024 and hit shuffle. i'd rate this 2/10 but that feels generous. the 2 points are purely for the entertainment value of watching a grown person curate a playlist that screams 'i still think cargo shorts are fashionable.'"
         };
     }
 }

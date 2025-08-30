@@ -54,8 +54,22 @@ export default function SuccessPage() {
     const [scannableItems, setScannableItems] = useState<ScannableItem[]>([]);
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
     const [isScanning, setIsScanning] = useState(false);
+    const [scanningComments, setScanningComments] = useState<string[]>([]);
+    const [scanningCommentsLoaded, setScanningCommentsLoaded] = useState(false);
+    const [shouldStopScanning, setShouldStopScanning] = useState(false);
     const scannerRef = useRef<HTMLDivElement>(null);
     const [finalTransform, setFinalTransform] = useState<string | undefined>(undefined);
+
+    const defaultScanningComments = [
+        "scanning your atrocious taste...",
+        "what fresh hell is this",
+        "found some questionable life choices",
+        "oh dear, this explains everything",
+        "your spotify wrapped must be embarrassing",
+        "i've seen middle schoolers with better taste",
+        "this is worse than i thought",
+        "someone needs to stage an intervention"
+    ];
 
     useEffect(() => {
         if (status === 'unauthenticated') {
@@ -118,28 +132,38 @@ export default function SuccessPage() {
             const shuffledItems = uniqueItems.sort(() => 0.5 - Math.random());
             const itemsToScan = shuffledItems.slice(0, 8);
 
-            // Generate scanning comments with track data
-            const scanningResponse = await fetch('/api/get-roast-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'scanning',
-                    roastData: spotifyData,
-                    tracksToScan: itemsToScan
+            // Start scanning immediately with default comments
+            startScanner(itemsToScan, defaultScanningComments);
+
+            // Generate scanning comments and roast experience in parallel
+            const [scanningResponse, roastResponse] = await Promise.all([
+                fetch('/api/get-roast-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'scanning',
+                        roastData: spotifyData,
+                        tracksToScan: itemsToScan
+                    }),
                 }),
-            });
-            const scanningData = await scanningResponse.json();
+                fetch('/api/get-roast-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'complete_roast', roastData: spotifyData }),
+                })
+            ]);
 
-            // Generate complete roast experience
-            const roastResponse = await fetch('/api/get-roast-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'complete_roast', roastData: spotifyData }),
-            });
-            const roastExperience = await roastResponse.json();
+            const [scanningData, roastExperience] = await Promise.all([
+                scanningResponse.json(),
+                roastResponse.json()
+            ]);
 
+            setScanningComments(scanningData.scanningComments);
+            setScanningCommentsLoaded(true);
             setRoastExperience(roastExperience);
-            startScanner(itemsToScan, scanningData.scanningComments);
+
+            // Signal that we should stop scanning soon
+            setShouldStopScanning(true);
 
         } catch (err) {
             setError("failed to fetch your spotify data.");
@@ -166,15 +190,42 @@ export default function SuccessPage() {
         setCurrentItemIndex(0);
     };
 
+    // Update scanning comments when they load
+    useEffect(() => {
+        if (scanningCommentsLoaded && scanningComments.length > 0 && scannableItems.length > 0) {
+            const realItemCount = scannableItems.length / 3;
+            const updatedItems = scannableItems.map((item, index) => ({
+                ...item,
+                comment: scanningComments[index % realItemCount] || item.comment
+            }));
+            setScannableItems(updatedItems);
+        }
+    }, [scanningCommentsLoaded, scanningComments]);
+
     useEffect(() => {
         if (!isScanning || scannableItems.length === 0) return;
 
         const realItemCount = scannableItems.length / 3;
-        const intervalDuration = 2500;
+        const intervalDuration = 4000; // Increased to allow comments to finish
 
         const interval = setInterval(() => {
             setCurrentItemIndex(prev => {
                 const next = prev + 1;
+
+                // Stop scanning if we have the roast data and we've shown at least 6 items
+                if (shouldStopScanning && roastExperience && next >= 6) {
+                    setIsScanning(false);
+                    const finalScrollAmount = (prev * 272);
+                    const finalTx = `translateX(calc(-128px - ${finalScrollAmount}px))`;
+                    setFinalTransform(finalTx);
+
+                    setTimeout(() => {
+                        setStep('ready');
+                    }, 1500);
+                    return prev;
+                }
+
+                // Default stop condition if we reach the end
                 if (next >= realItemCount * 2) {
                     setIsScanning(false);
                     const finalScrollAmount = (prev * 272);
@@ -183,7 +234,7 @@ export default function SuccessPage() {
 
                     setTimeout(() => {
                         setStep('ready');
-                    }, 2000);
+                    }, 1500);
                     return prev;
                 }
                 return next;
@@ -191,7 +242,7 @@ export default function SuccessPage() {
         }, intervalDuration);
 
         return () => clearInterval(interval);
-    }, [isScanning, scannableItems.length]);
+    }, [isScanning, scannableItems.length, shouldStopScanning, roastExperience]);
 
     const getSliderResponseKey = (value: number): string => {
         if (value <= 25) return "0-25";
@@ -218,17 +269,16 @@ export default function SuccessPage() {
         setQuestionResponses(newResponses);
         setShowChoices(false);
         setShowResponse(true);
+    };
 
-        // Auto-advance after showing response
-        setTimeout(() => {
-            if (currentQuestionIndex < (roastExperience?.questions.length || 0) - 1) {
-                setCurrentQuestionIndex(prev => prev + 1);
-                setShowResponse(false);
-                setSliderValue(50);
-            } else {
-                setStep('complete');
-            }
-        }, 3000);
+    const handleNextQuestion = () => {
+        if (currentQuestionIndex < (roastExperience?.questions.length || 0) - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+            setShowResponse(false);
+            setSliderValue(50);
+        } else {
+            setStep('complete');
+        }
     };
 
     const renderContent = () => {
@@ -300,14 +350,14 @@ export default function SuccessPage() {
                     </div>
 
                     <div className="absolute inset-0 z-10 w-full flex items-end justify-center pointer-events-none">
-                        <div className="absolute bottom-0 mb-4 w-full max-w-lg min-h-[4rem] p-3 bg-gray-800 rounded-lg flex items-center justify-center">
+                        <div className="absolute bottom-0 mb-4 w-full max-w-2xl min-h-[6rem] p-4 bg-gray-800 rounded-lg flex items-center justify-center">
                             {scannableItems[currentItemIndex] ? (
                                 <TypeAnimation
                                     key={`${currentItemIndex}-${scannableItems[currentItemIndex]?.comment}`}
                                     sequence={[scannableItems[currentItemIndex].comment]}
                                     wrapper="p"
-                                    speed={80}
-                                    className="text-center text-gray-200 text-sm"
+                                    speed={50}
+                                    className="text-center text-gray-200 text-sm leading-relaxed"
                                     cursor={false}
                                 />
                             ) : (
@@ -321,7 +371,7 @@ export default function SuccessPage() {
                         className="absolute top-16 left-1/2 flex items-center gap-4"
                         style={{
                             transform: isScanning ? `translateX(calc(-${itemWidth / 2}px - ${scrollAmount}px))` : finalTransform,
-                            transition: isScanning ? 'transform 2.5s cubic-bezier(0.65, 0, 0.35, 1)' : 'transform 0.5s ease-out',
+                            transition: isScanning ? 'transform 4s cubic-bezier(0.65, 0, 0.35, 1)' : 'transform 0.5s ease-out',
                         }}
                     >
                         {scannableItems.map((item, index) => {
@@ -410,9 +460,18 @@ export default function SuccessPage() {
                             className="p-4 bg-gray-900 rounded-lg border border-green-500/30 w-full"
                         >
                             <TypeAnimation
-                                sequence={[questionResponses[currentQuestionIndex]]}
+                                sequence={[
+                                    questionResponses[currentQuestionIndex],
+                                    2000,
+                                    () => {
+                                        // Auto-advance after 3 seconds
+                                        setTimeout(() => {
+                                            handleNextQuestion();
+                                        }, 3000);
+                                    }
+                                ]}
                                 wrapper="p"
-                                speed={70}
+                                speed={60}
                                 className="text-gray-200 whitespace-pre-wrap"
                                 cursor={false}
                             />
@@ -462,15 +521,21 @@ export default function SuccessPage() {
                                                 alt={choice.text}
                                                 className="w-40 h-40 object-cover rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all"
                                                 onClick={() => handleChoice(choice.value)}
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.style.display = 'none';
+                                                    const fallback = target.nextElementSibling as HTMLDivElement;
+                                                    if (fallback) fallback.style.display = 'flex';
+                                                }}
                                             />
-                                        ) : (
-                                            <div
-                                                className="w-40 h-40 bg-gray-700 rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all flex items-center justify-center text-center p-2"
-                                                onClick={() => handleChoice(choice.value)}
-                                            >
-                                                <span>no cover art</span>
-                                            </div>
-                                        )}
+                                        ) : null}
+                                        <div
+                                            className="w-40 h-40 bg-gray-700 rounded-md border-2 border-transparent hover:border-green-500 cursor-pointer transition-all flex items-center justify-center text-center p-2"
+                                            onClick={() => handleChoice(choice.value)}
+                                            style={{ display: choice.imageUrl ? 'none' : 'flex' }}
+                                        >
+                                            <span className="text-sm">no cover art</span>
+                                        </div>
                                         <p className="text-xs text-center w-40 text-gray-300">{choice.text}</p>
                                     </div>
                                 ) : (
@@ -494,13 +559,15 @@ export default function SuccessPage() {
             return (
                 <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-4xl">
                     <div className="space-y-4 w-full">
-                        {questionResponses.map((roast, index) => (
-                            <div key={index} className="p-4 bg-gray-800 rounded-lg">
-                                <p className="text-gray-200 whitespace-pre-wrap">{roast}</p>
-                            </div>
-                        ))}
-                        <div className="p-6 bg-gray-900 rounded-lg border border-green-500/30">
-                            <p className="text-gray-200 whitespace-pre-wrap text-lg font-medium">{roastExperience.finalVerdict}</p>
+                        <div className="p-6 bg-gray-900 rounded-lg border border-red-500/30">
+                            <h2 className="text-2xl font-bold text-red-400 mb-4 text-center">final verdict</h2>
+                            <TypeAnimation
+                                sequence={[roastExperience.finalVerdict]}
+                                wrapper="p"
+                                speed={50}
+                                className="text-gray-200 whitespace-pre-wrap text-lg leading-relaxed"
+                                cursor={false}
+                            />
                         </div>
                     </div>
                     <div className="flex flex-col items-center gap-4">
