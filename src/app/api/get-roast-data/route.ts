@@ -13,6 +13,8 @@ import {
     generateIntroMessage
 } from '../../../lib/gemini';
 
+export const runtime = 'edge';
+
 export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 

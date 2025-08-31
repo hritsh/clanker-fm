@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import SpotifyProvider from "next-auth/providers/spotify";
 import { JWT } from "next-auth/jwt";
 
+export const runtime = 'edge';
+
 // Extend the Session type to include accessToken and error
 declare module "next-auth" {
     interface Session {
