@@ -13,6 +13,7 @@ import {
     generateIntroMessage
 } from '../../../lib/gemini';
 
+// Add Edge Runtime configuration for Cloudflare Pages
 export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
