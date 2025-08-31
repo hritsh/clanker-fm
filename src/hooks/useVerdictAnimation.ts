@@ -50,7 +50,7 @@ export const useVerdictAnimation = (step: string, roastExperience: any) => {
     useEffect(() => {
         if (!isTypingVerdict || verdictLines.length === 0) return;
 
-        let timeoutId: NodeJS.Timeout;
+        let timeoutId: ReturnType<typeof setTimeout>;
 
         // Special handling for the backspacing sequence
         if (currentLineIndex === 1) { // "your taste is actually pretty goo"

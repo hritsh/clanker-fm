@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
@@ -12,9 +13,6 @@ import {
     generateCompleteRoastExperience,
     generateIntroMessage
 } from '../../../lib/gemini';
-
-// Add Edge Runtime configuration for Cloudflare Pages
-export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);

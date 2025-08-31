@@ -19,7 +19,7 @@ export default function Home() {
     ];
 
     useEffect(() => {
-        let mouthInterval: NodeJS.Timeout;
+        let mouthInterval: ReturnType<typeof setInterval>;
 
         const showMessage = () => {
             const randomMessage = snarkyMessages[Math.floor(Math.random() * snarkyMessages.length)];
