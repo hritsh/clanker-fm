@@ -79,6 +79,15 @@ export default function SuccessPage() {
     const [canStartCycling, setCanStartCycling] = useState(false);
     const [pendingCommentUpdate, setPendingCommentUpdate] = useState(false);
 
+    // Final verdict animation state
+    const [currentText, setCurrentText] = useState('');
+    const [showCursor, setShowCursor] = useState(true);
+    const [verdictLines, setVerdictLines] = useState<string[]>([]);
+    const [currentLineIndex, setCurrentLineIndex] = useState(0);
+    const [isTypingVerdict, setIsTypingVerdict] = useState(false);
+    const [animationPhase, setAnimationPhase] = useState<'typing' | 'backspacing' | 'retyping'>('typing');
+    const verdictContainerRef = useRef<HTMLDivElement>(null);
+
     const defaultScanningComments = [
         "scanning your atrocious taste...",
         "what fresh hell is this",
@@ -89,6 +98,107 @@ export default function SuccessPage() {
         "this is worse than i thought",
         "someone needs to stage an intervention"
     ];
+
+    // Add state for animated dots
+    const [scanningText, setScanningText] = useState("SCANNING MUSIC DATA");
+
+    // Parse final verdict into animated sequence
+    const parseVerdictForAnimation = (verdict: string) => {
+        const lines = verdict.split('\n').filter(line => line.trim());
+        setVerdictLines(lines);
+    };
+
+    // Animate the final verdict with backspacing effect
+    useEffect(() => {
+        if (step === 'complete' && roastExperience && !isTypingVerdict) {
+            parseVerdictForAnimation(roastExperience.finalVerdict);
+            setIsTypingVerdict(true);
+            setCurrentLineIndex(0);
+            setCurrentText('');
+            setAnimationPhase('typing');
+        }
+    }, [step, roastExperience, isTypingVerdict]);
+
+    // Auto-scroll effect
+    useEffect(() => {
+        if (step === 'complete' && verdictContainerRef.current) {
+            const container = verdictContainerRef.current;
+            container.scrollTop = container.scrollHeight;
+        }
+    }, [currentLineIndex, currentText, step]);
+
+    // Handle verdict animation
+    useEffect(() => {
+        if (!isTypingVerdict || verdictLines.length === 0) return;
+
+        let timeoutId: NodeJS.Timeout;
+
+        // Special handling for the backspacing sequence
+        if (currentLineIndex === 1) { // "your taste is actually pretty goo"
+            if (animationPhase === 'typing') {
+                if (currentText.length < "your taste is actually pretty goo".length) {
+                    timeoutId = setTimeout(() => {
+                        setCurrentText("your taste is actually pretty goo".slice(0, currentText.length + 1));
+                    }, 50);
+                } else {
+                    // Start backspacing after a pause
+                    timeoutId = setTimeout(() => {
+                        setAnimationPhase('backspacing');
+                    }, 1000);
+                }
+            } else if (animationPhase === 'backspacing') {
+                if (currentText.length > "your taste is actually pretty".length) {
+                    timeoutId = setTimeout(() => {
+                        setCurrentText(currentText.slice(0, -1));
+                    }, 50);
+                } else {
+                    // Start retyping
+                    timeoutId = setTimeout(() => {
+                        setAnimationPhase('retyping');
+                    }, 300);
+                }
+            } else if (animationPhase === 'retyping') {
+                const targetText = "your taste is actually pretty... predictable.";
+                if (currentText.length < targetText.length) {
+                    timeoutId = setTimeout(() => {
+                        setCurrentText(targetText.slice(0, currentText.length + 1));
+                    }, 50);
+                } else {
+                    // Move to next line, but skip index 2 since we're replacing line 1
+                    timeoutId = setTimeout(() => {
+                        setCurrentLineIndex(3); // Skip to "rewriting assessment..."
+                        setCurrentText('');
+                        setAnimationPhase('typing');
+                    }, 1500);
+                }
+            }
+        } else {
+            // Normal typing for other lines
+            const currentLine = verdictLines[currentLineIndex];
+            if (!currentLine) return;
+
+            if (currentText.length < currentLine.length) {
+                timeoutId = setTimeout(() => {
+                    setCurrentText(currentLine.slice(0, currentText.length + 1));
+                }, currentLineIndex === 0 ? 80 : 40); // Slower for first line
+            } else {
+                timeoutId = setTimeout(() => {
+                    setCurrentLineIndex(prev => prev + 1);
+                    setCurrentText('');
+                }, currentLineIndex === 0 ? 800 : 600); // Longer pause for first line
+            }
+        }
+
+        return () => clearTimeout(timeoutId);
+    }, [currentText, currentLineIndex, verdictLines, isTypingVerdict, animationPhase]);
+
+    // Cursor blinking effect
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setShowCursor(prev => !prev);
+        }, 500);
+        return () => clearInterval(interval);
+    }, []);
 
     // Handle intro message logic
     useEffect(() => {
@@ -375,6 +485,30 @@ export default function SuccessPage() {
         }
     };
 
+    // Helper function to determine line styling
+    const getLineStyle = (line: string, index: number) => {
+        // Special styling for certain lines
+        if (line.includes('basicness index:') || line.includes('variety score:') || line.includes('analysis complete:')) {
+            return "text-[#FF6B6B] font-bold"; // Red for percentages
+        }
+        if (line.includes('rating:') && line.includes('/10')) {
+            return "text-[#FFD93D] font-bold text-xl"; // Yellow and larger for rating
+        }
+        if (line.includes('diagnosis:') || line.includes('toxicology:') || line.includes('recommendation:')) {
+            return "text-[#FF8C42] font-semibold"; // Orange for medical/warning terms
+        }
+        if (line.includes('tracks raising the most concern:') || line.includes('artists you treat like emotional support animals:')) {
+            return "text-[#6BCF7F] font-semibold underline"; // Green headers
+        }
+        if (index >= verdictLines.length - 3) {
+            return "text-[#B19CD9] italic"; // Purple for closing lines
+        }
+        if (line.startsWith('  ') || line.includes(' — ')) {
+            return "text-[#95A5A6] ml-4"; // Gray and indented for sub-items
+        }
+        return "text-[#00FF00]"; // Default green
+    };
+
     const renderContent = () => {
         const motionProps = {
             initial: { opacity: 0, y: 20 },
@@ -460,7 +594,9 @@ export default function SuccessPage() {
                     </div>
                     <div className="p-4 h-96 overflow-hidden">
                         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
-                            <h2 className="text-xl font-bold text-[#00FF00]">SCANNING MUSIC DATA</h2>
+                            <h2 className="text-xl font-bold text-[#00FF00]">
+                                {scanningText}
+                            </h2>
                         </div>
 
                         <div className="absolute inset-0 z-10 w-full flex items-end justify-center pointer-events-none">
@@ -721,11 +857,6 @@ export default function SuccessPage() {
         }
 
         if (step === 'complete' && roastExperience && roastData) {
-            // Split the final verdict into smaller paragraphs for better readability
-            const verdictParagraphs = roastExperience.finalVerdict
-                .split(/(?<=\.)\s+(?=[A-Z])/g)
-                .filter(p => p.trim().length > 0);
-
             // Get top album covers for display
             const albumCovers = roastData.topTracks?.items
                 ?.slice(0, 6)
@@ -733,15 +864,15 @@ export default function SuccessPage() {
                 ?.filter(Boolean) || [];
 
             return (
-                <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-4xl">
+                <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-5xl w-full">
                     <div className="terminal-window w-full">
                         <div className="terminal-titlebar">
-                            <span className="text-[#FF0000] text-sm">FINAL VERDICT</span>
+                            <span className="text-[#FF0000] text-sm">FINAL ANALYSIS</span>
                         </div>
-                        <div className="p-4">
+                        <div className="p-8">
                             {/* Album covers display */}
                             {albumCovers.length > 0 && (
-                                <div className="flex flex-wrap justify-center gap-3 mb-4 border-b-[1px] border-[#00FF00] pb-4">
+                                <div className="flex flex-wrap justify-center gap-3 mb-8 border-b-[1px] border-[#00FF00] pb-4">
                                     {albumCovers.map((cover: any, index: number) => (
                                         <img
                                             key={index}
@@ -753,36 +884,45 @@ export default function SuccessPage() {
                                 </div>
                             )}
 
-                            <div className="space-y-4 w-full text-[#00FF00]">
-                                {verdictParagraphs.map((paragraph, index) => (
-                                    <div key={index} className="flex">
-                                        {index === 0 && <ClankerIcon />}
-                                        <div className="flex-1 text-center">
-                                            <TypeAnimation
-                                                sequence={[paragraph]}
-                                                wrapper="p"
-                                                speed={85}
-                                                className="text-[#00FF00] text-base"
-                                                cursor={false}
-                                                style={{ minHeight: '1.5em' }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
+                            {/* Animated verdict display with auto-scroll */}
+                            <div 
+                                ref={verdictContainerRef}
+                                className="text-left font-mono text-base leading-relaxed max-h-[600px] overflow-y-auto pr-2"
+                                style={{ scrollBehavior: 'smooth' }}
+                            >
+                                {/* Show completed lines, but handle the special backspacing case */}
+                                {verdictLines.slice(0, currentLineIndex).map((line, index) => {
+                                    // Skip showing line 1 in completed lines since it gets replaced
+                                    if (index === 1) return null;
+                                    
+                                    return (
+                                        <p key={index} className={`mb-2 ${getLineStyle(line, index)}`}>
+                                            &gt; {line}
+                                        </p>
+                                    );
+                                })}
+                                
+                                {/* Show current typing line */}
+                                {currentLineIndex < verdictLines.length && (
+                                    <p className={`mb-2 ${getLineStyle(verdictLines[currentLineIndex], currentLineIndex)}`}>
+                                        &gt; {currentText}
+                                        {showCursor && <span className="text-[#00FF00]">█</span>}
+                                    </p>
+                                )}
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="flex flex-col items-center gap-4">
-                        <p className="text-[#00FF00] text-sm">
-                            roast complete. hope you learned something about yourself.
-                        </p>
-                        <Link
-                            href="/home"
-                            className="terminal-btn"
-                        >
-                            GO TO HOME
-                        </Link>
+                            {/* Show done button when animation completes */}
+                            {currentLineIndex >= verdictLines.length && (
+                                <div className="flex flex-col items-center gap-4 mt-8">
+                                    <Link
+                                        href="/home"
+                                        className="terminal-btn"
+                                    >
+                                        RESTART SYSTEM
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </motion.div>
             );
@@ -790,6 +930,22 @@ export default function SuccessPage() {
 
         return null;
     };
+
+    // Add effect to animate the dots
+    useEffect(() => {
+        if (step !== 'scanning') return;
+
+        const interval = setInterval(() => {
+            setScanningText(prev => {
+                if (prev === "SCANNING MUSIC DATA") return "SCANNING MUSIC DATA.";
+                if (prev === "SCANNING MUSIC DATA.") return "SCANNING MUSIC DATA..";
+                if (prev === "SCANNING MUSIC DATA..") return "SCANNING MUSIC DATA...";
+                return "SCANNING MUSIC DATA";
+            });
+        }, 500); // Update every 500ms
+
+        return () => clearInterval(interval);
+    }, [step]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-black">

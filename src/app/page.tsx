@@ -19,15 +19,15 @@ export default function Home() {
                         <span className="text-[#00FF00] text-sm">ROAST.FM v1.0</span>
                     </div>
                     <div className="p-8">
-                        <pre className="text-[#00FF00] text-4xl font-bold mb-6">
-{`  _____                _     ______ __  __ 
+                        <pre className="text-[#00FF00] text-xl font-bold mb-6">
+                            {`  _____                _     ______ __  __ 
  |  __ \\               | |   |  ____|  \\/  |
  | |__) |___   __ _ ___| |_  | |__  | \\  / |
  |  _  // _ \\ / _\` / __| __| |  __| | |\\/| |
  | | \\ \\ (_) | (_| \\__ \\ |_  | |    | |  | |
  |_|  \\_\\___/ \\__,_|___/\\__| |_|    |_|  |_|`}
                         </pre>
-                        
+
                         <p className="my-6 text-white font-mono">
                             Get your music taste judged by a snobby AI.
                         </p>

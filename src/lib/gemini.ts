@@ -113,12 +113,12 @@ Do not include any markdown, code blocks, or extra text. Just the JSON array.
         console.error("Error generating scanning comments:", error);
         return tracksToScan.map((_, index) => [
             "scanning your atrocious taste...",
-            "what fresh hell is this",
-            "found some questionable life choices",
-            "oh dear, this explains everything",
-            "your spotify wrapped must be embarrassing",
-            "i've seen middle schoolers with better taste",
-            "this is worse than i thought",
+            "what fresh hell is this...",
+            "finding some questionable life choices...",
+            "oh dear, this explains everything...",
+            "your spotify wrapped must be embarrassing...",
+            "i've seen middle schoolers with better taste...",
+            "this is worse than i thought...",
             "someone needs to stage an intervention"
         ][index] || "scanning your music crimes...");
     }
@@ -129,9 +129,9 @@ export async function generateCompleteRoastExperience(roastData: any) {
         const cleanedData = cleanDataForAI(roastData);
 
         const prompt = `
-you are "clanker", a music taste roasting bot. analyze this spotify data and create a complete interactive roasting experience.
+you are "clanker", a sarcastic, hyper-observant music analyst bot. analyze this spotify data and create a complete interactive roasting experience.
 
-personality: lowercase, dry, observational, self-aware bot who gives honest burns
+personality: lowercase, dry, clinical yet devastating in your analysis
 
 user data: ${JSON.stringify(cleanedData)}
 
@@ -152,13 +152,13 @@ respond with ONLY a valid JSON object in this exact format (no markdown, no code
     },
     ...5-6 questions total
   ],
-  "finalVerdict": "DEVASTATING final roast (8-10 sentences) that brutally analyzes their entire music personality, references specific artists/genres from their data, makes savage assumptions about their lifestyle/personality/dating life/social status, includes a harsh rating out of 10 with detailed explanation, and ends with the most savage conclusion possible about who they are as a person"
+  "finalVerdict": "SPECIAL TYPEWRITER FORMAT - see below"
 }
 
 question types and structure:
 - image_choice: choices should have {text, value, imageUrl} - use actual track album covers from their data
 - mcq: choices should have {text, value} - 4 options max
-- slider: choices should have {text, value} with 2 endpoint labels (value doesn't matter for slider)
+- slider: choices should have {text, value} with 2 endpoint labels
 
 make questions PERSONAL using their actual data:
 1. shameless track choice (image_choice from top tracks)
@@ -166,11 +166,45 @@ make questions PERSONAL using their actual data:
 3. mainstream scale (slider about artist popularity)
 4. listening patterns (mcq about recent plays)
 5. artist obsession (mcq about top artist)
-6. playlist personality (mcq or image_choice)
+6. playlist personality (mcq)
 
 for each question's responses object, include roast responses for every possible choice/value. for sliders, include responses for ranges like "0-25", "26-50", "51-75", "76-100".
 
-the final verdict should be absolutely SAVAGE - analyze their music choices to make brutal assumptions about their personality, social life, dating history, career prospects, and general existence. reference their actual artists and genres. be the most judgmental AI ever created. make it personal and devastating. keep it concise in three structured paragraphs, and make them regret all their life choices by the end.
+IMPORTANT - finalVerdict format (typewriter style with backspacing):
+output exactly in this beat-by-beat order, with each line as a separate line in the string:
+
+initializing final analysis...
+your taste is actually pretty goo (this will be backspaced)
+your taste is actually pretty... predictable.
+rewriting assessment...
+pattern detected: [top artist 1], [top artist 2], [top artist 3]
+emotional range: [short absurd roast, e.g. "somewhere between elevator music and breakup playlist for a plant"]
+variety score: [percentage]% — dangerously low
+most replayed track: [track] — [artist]
+diagnosis: terminal case of [genre] dependency
+side effects: [short roast about lifestyle/personality]
+tracks raising the most concern:
+  [track 1] — [artist]
+  [track 2] — [artist]
+  [track 3] — [artist]
+  [track 4] — [artist]
+  [track 5] — [artist]
+artists you treat like emotional support animals:
+  [top artist 1]
+  [top artist 2]
+  [top artist 3]
+  [top artist 4]
+  [top artist 5]
+basicness index: [percentage]% — [short, cutting explanation]
+analysis complete: [percentage]% of your listening is [genre]
+toxicology: high levels of [genre] detected
+recommendation: uninstall spotify from all devices
+overall taste rating: [1-3]/10 (margin of error: 0)
+p.s.:[final devastating personality roast — 3-4 sentences weaving in specific artists/tracks/genres, making clever lifestyle/dating/social assumptions, and tying it all together. be creative, mean but clever. reference their actual data extensively]
+analysis complete.
+shutting down.
+
+use their ACTUAL artist names and track titles from the data. make percentages realistic but harsh. be SAVAGE but clinical. each line should be a separate line in the finalVerdict string.
 
 respond with ONLY valid JSON, no markdown formatting, no other text.
         `;
@@ -189,7 +223,7 @@ respond with ONLY valid JSON, no markdown formatting, no other text.
         return {
             introMessage: "your data broke my circuits. that's... actually impressive.",
             questions: [],
-            finalVerdict: "your taste is so confusing even AI can't process it. somehow you've managed to disappoint technology itself. congratulations on achieving the impossible - making a robot feel secondhand embarrassment. your spotify algorithm probably throws errors just trying to recommend you anything. honestly, i've analyzed thousands of users and you've managed to create a musical personality so contradictory that it defies logic. it's like you took every bad decision from 2010-2024 and hit shuffle. i'd rate this 2/10 but that feels generous. the 2 points are purely for the entertainment value of watching a grown person curate a playlist that screams 'i still think cargo shorts are fashionable.'"
+            finalVerdict: "initializing final analysis...\nyour taste is actually pretty goo\nyour taste is actually pretty... predictable.\nrewriting assessment...\npattern detected: error, error, error\nemotional range: somewhere between elevator music and dial-up modem sounds\nvariety score: 12% — dangerously low\nmost replayed track: error loading — error loading\ndiagnosis: terminal case of broken-ai dependency\nside effects: causes artificial intelligence to question its existence\ntracks raising the most concern:\n  error loading — error loading\n  error loading — error loading\n  error loading — error loading\n  error loading — error loading\n  error loading — error loading\nartists you treat like emotional support animals:\n  error loading\n  error loading\n  error loading\n  error loading\n  error loading\nbasicness index: 100% — somehow managed to be basic and chaotic simultaneously\nanalysis complete: 100% of your listening is unclassifiable\ntoxicology: high levels of confusion detected\nrecommendation: uninstall spotify from all devices\noverall taste rating: 0/10 (margin of error: 0)\nyour musical choices have achieved something remarkable: they've broken an ai designed to process infinite data points. your taste is so contradictory, so fundamentally confusing, that you've created a new category of listener that exists outside known music taxonomy. congratulations, you've confused a machine.\nanalysis complete.\nshutting down."
         };
     }
 }
