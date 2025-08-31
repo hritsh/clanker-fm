@@ -1,8 +1,9 @@
 name = "clanker-fm"
 compatibility_date = "2025-09-01"
 
+# Cloudflare Pages (Advanced Mode) output locations produced by next-on-pages
+pages_build_output_dir = ".vercel/output/static"
+pages_functions_dir    = ".vercel/output/functions"
+
 [build]
-# Use the Next-on-Pages wrapper instead of `next build`
 command = "npm run cf-build"
-pages_build_output_dir = ".vercel_build_output/output"
-pages_functions_dir    = ".vercel_build_output/functions"
