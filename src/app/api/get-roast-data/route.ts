@@ -1,27 +1,29 @@
-export const runtime = 'edge';
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+export const runtime = 'edge'
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getToken } from "next-auth/jwt"
+
 import {
     getUserProfile,
     getTopItems,
     getRecentlyPlayed,
     getSavedTracks
-} from '../../../lib/spotify';
+} from '../../../lib/spotify'
 import {
     generateScanningComments,
     generateCompleteRoastExperience,
     generateIntroMessage
-} from '../../../lib/gemini';
+} from '../../../lib/gemini'
 
 export async function GET(request: NextRequest) {
-    const session = await getServerSession(authOptions);
-
-    if (!session || !session.accessToken) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const token = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET!
+    })
+    if (!token?.accessToken) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const accessToken = session.accessToken as string;
+    const accessToken = token.accessToken as string
 
     try {
         const [userProfile, topArtists, topTracks, recentlyPlayed, savedTracks] =
