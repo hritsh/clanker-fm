@@ -73,7 +73,7 @@ export const useScanningAnimation = (
         if (!isScanning || scannableItems.length === 0 || !canStartCycling) return;
 
         const realItemCount = scannableItems.length / 3;
-        let timeoutId: ReturnType<typeof setTimeout>;
+        let timeoutId: NodeJS.Timeout;
 
         const scheduleNextItem = () => {
             const currentItem = scannableItems[currentItemIndex];

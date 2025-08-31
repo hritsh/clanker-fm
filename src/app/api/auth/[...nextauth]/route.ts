@@ -3,30 +3,30 @@ import SpotifyProvider from "next-auth/providers/spotify";
 import { JWT } from "next-auth/jwt";
 
 // Extend the Session type to include accessToken and error
-declare module 'next-auth' {
+declare module "next-auth" {
     interface Session {
-        accessToken?: string
-        error?: string
-        user?: import('next-auth').DefaultUser
+        accessToken?: string;
+        error?: string;
+        user?: import("next-auth").DefaultUser;
     }
 }
 
 async function refreshAccessToken(token: JWT) {
     try {
         const url =
-            'https://accounts.spotify.com/api/token?' +
+            "https://accounts.spotify.com/api/token?" +
             new URLSearchParams({
                 client_id: process.env.SPOTIFY_CLIENT_ID as string,
                 client_secret: process.env.SPOTIFY_CLIENT_SECRET as string,
-                grant_type: 'refresh_token',
+                grant_type: "refresh_token",
                 refresh_token: token.refreshToken as string,
             });
 
         const response = await fetch(url, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                "Content-Type": "application/x-www-form-urlencoded",
             },
-            method: 'POST',
+            method: "POST",
         });
 
         const refreshedTokens = await response.json();
@@ -46,7 +46,7 @@ async function refreshAccessToken(token: JWT) {
 
         return {
             ...token,
-            error: 'RefreshAccessTokenError',
+            error: "RefreshAccessTokenError",
         };
     }
 }
@@ -54,12 +54,11 @@ async function refreshAccessToken(token: JWT) {
 export const authOptions = {
     providers: [
         SpotifyProvider({
-            clientId: process.env.SPOTIFY_CLIENT_ID!,
-            clientSecret: process.env.SPOTIFY_CLIENT_SECRET!,
+            clientId: process.env.SPOTIFY_CLIENT_ID as string,
+            clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
             authorization: {
                 params: {
-                    scope:
-                        'user-read-email user-top-read user-read-recently-played user-read-playback-state user-read-currently-playing user-library-read',
+                    scope: "user-read-email user-top-read user-read-recently-played user-read-playback-state user-read-currently-playing user-library-read",
                 },
             },
         }),
@@ -82,16 +81,17 @@ export const authOptions = {
             return refreshAccessToken(token);
         },
         async session({ session, token }: { session: any; token: JWT }) {
-            session.accessToken = typeof token.accessToken === 'string' ? token.accessToken : undefined;
-            session.error = typeof token.error === 'string' ? token.error : undefined;
-            session.user = token.user as import('next-auth').DefaultUser | undefined;
+            session.accessToken = typeof token.accessToken === "string" ? token.accessToken : undefined;
+            session.error = typeof token.error === "string" ? token.error : undefined;
+            session.user = token.user as import("next-auth").DefaultUser | undefined;
             return session;
         },
     },
     pages: {
         signIn: '/login',
     },
-}
+};
 
-const handler = NextAuth(authOptions)
-export { handler as GET, handler as POST }
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
