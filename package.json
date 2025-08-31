@@ -2,9 +2,9 @@
   "name": "clanker-fm",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
+    "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "cf-build": "npx @cloudflare/next-on-pages@latest",
     "start": "next start",
     "lint": "eslint"
   },
