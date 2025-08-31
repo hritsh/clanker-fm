@@ -38,6 +38,7 @@ export default function SuccessPage() {
     const [showResponse, setShowResponse] = useState(false);
     const [sliderValue, setSliderValue] = useState(50);
     const [scanningText, setScanningText] = useState("SCANNING MUSIC DATA");
+    const [selectedChoices, setSelectedChoices] = useState<string[]>([]); // Add this to track selected choices
 
     // Custom hooks
     const {
@@ -152,8 +153,11 @@ export default function SuccessPage() {
 
         const newAnswers = [...userAnswers, value];
         const newResponses = [...questionResponses, response];
+        const newSelectedChoices = [...selectedChoices, value]; // Track the selected choice
+        
         setUserAnswers(newAnswers);
         setQuestionResponses(newResponses);
+        setSelectedChoices(newSelectedChoices);
         setShowChoices(false);
         setShowResponse(true);
     };
@@ -256,6 +260,7 @@ export default function SuccessPage() {
                     showResponse={showResponse}
                     questionResponse={questionResponses[currentQuestionIndex] || ''}
                     sliderValue={sliderValue}
+                    selectedChoice={selectedChoices[currentQuestionIndex]} // Add this prop
                     onShowChoices={() => setShowChoices(true)}
                     onChoice={handleChoice}
                     onNextQuestion={handleNextQuestion}
