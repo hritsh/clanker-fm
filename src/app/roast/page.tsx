@@ -20,10 +20,10 @@ export default function RoastPage() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-black p-6">
+        <div className="min-h-screen bg-background p-6">
             <div className="max-w-4xl mx-auto pt-8 pb-24">
-                <h1 className="text-3xl font-bold text-white mb-8">Roast My Music</h1>
-                <div className="text-center text-gray-400">
+                <h1 className="text-3xl font-bold text-foreground mb-8">Roast My Music</h1>
+                <div className="text-center text-terminal-muted">
                     <p>Redirecting to roast experience...</p>
                 </div>
             </div>

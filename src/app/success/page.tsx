@@ -90,13 +90,13 @@ export default function SuccessPage() {
 
     const defaultScanningComments = [
         "scanning your atrocious taste...",
-        "what fresh hell is this",
-        "found some questionable life choices",
-        "oh dear, this explains everything",
-        "your spotify wrapped must be embarrassing",
-        "i've seen middle schoolers with better taste",
-        "this is worse than i thought",
-        "someone needs to stage an intervention"
+        "this is worse than i thought...",
+        "finding some questionable life choices...",
+        "what fresh hell is this...",
+        "oh dear, this explains everything...",
+        "your spotify wrapped must be embarrassing...",
+        "i've seen middle schoolers with better taste...",
+        "someone needs to stage an intervention..."
     ];
 
     // Add state for animated dots
@@ -489,24 +489,24 @@ export default function SuccessPage() {
     const getLineStyle = (line: string, index: number) => {
         // Special styling for certain lines
         if (line.includes('basicness index:') || line.includes('variety score:') || line.includes('analysis complete:')) {
-            return "text-[#FF6B6B] font-bold"; // Red for percentages
+            return "text-terminal-danger font-bold"; // Red for percentages
         }
         if (line.includes('rating:') && line.includes('/10')) {
-            return "text-[#FFD93D] font-bold text-xl"; // Yellow and larger for rating
+            return "text-yellow-400 font-bold text-xl"; // Yellow and larger for rating
         }
         if (line.includes('diagnosis:') || line.includes('toxicology:') || line.includes('recommendation:')) {
-            return "text-[#FF8C42] font-semibold"; // Orange for medical/warning terms
+            return "text-orange-400 font-semibold"; // Orange for medical/warning terms
         }
         if (line.includes('tracks raising the most concern:') || line.includes('artists you treat like emotional support animals:')) {
-            return "text-[#6BCF7F] font-semibold underline"; // Green headers
+            return "text-green-400 font-semibold underline"; // Green headers
         }
         if (index >= verdictLines.length - 3) {
-            return "text-[#B19CD9] italic"; // Purple for closing lines
+            return "text-purple-400 italic"; // Purple for closing lines
         }
         if (line.startsWith('  ') || line.includes(' — ')) {
-            return "text-[#95A5A6] ml-4"; // Gray and indented for sub-items
+            return "text-terminal-muted ml-4"; // Gray and indented for sub-items
         }
-        return "text-[#00FF00]"; // Default green
+        return "text-terminal-primary"; // Default green
     };
 
     const renderContent = () => {
@@ -525,11 +525,11 @@ export default function SuccessPage() {
             return (
                 <motion.div key="error" {...motionProps} className="mt-8 terminal-window w-full max-w-4xl">
                     <div className="terminal-titlebar">
-                        <span className="text-[#FF0000] text-sm">ERROR.LOG</span>
+                        <span className="text-terminal-danger text-sm">ERROR.LOG</span>
                     </div>
                     <div className="p-4">
-                        <p className="font-bold text-[#FF0000]">error:</p>
-                        <p className="mt-2 text-white">{error}</p>
+                        <p className="font-bold text-terminal-danger">error:</p>
+                        <p className="mt-2 text-foreground">{error}</p>
                     </div>
                 </motion.div>
             );
@@ -540,7 +540,7 @@ export default function SuccessPage() {
                 <motion.div key="intro" {...motionProps} className="flex flex-col items-center gap-6">
                     <div className="terminal-window w-full max-w-3xl">
                         <div className="terminal-titlebar">
-                            <span className="text-[#00FF00] text-sm">CLANKER v1.0</span>
+                            <span className="text-terminal-primary text-sm">CLANKER v1.0</span>
                         </div>
                         <div className="p-6">
                             {introMessage ? (
@@ -551,14 +551,14 @@ export default function SuccessPage() {
                                             sequence={[introMessage, 1000, () => setShowChoices(true)]}
                                             wrapper="p"
                                             speed={80}
-                                            className="text-[#00FF00]"
+                                            className="text-terminal-primary"
                                             cursor={true}
                                             style={{ minHeight: '1.5em' }}
                                         />
                                     </div>
                                 </div>
                             ) : (
-                                <p className="text-[#00FF00] animate-pulse text-center">...<span className="animate-blink">_</span></p>
+                                <p className="text-terminal-primary animate-pulse text-center">...<span className="animate-blink">_</span></p>
                             )}
                         </div>
                     </div>
@@ -590,17 +590,17 @@ export default function SuccessPage() {
             return (
                 <motion.div key="scanning" {...motionProps} className="relative terminal-window w-full">
                     <div className="terminal-titlebar">
-                        <span className="text-[#00FF00] text-sm">SCANNER.EXE</span>
+                        <span className="text-terminal-primary text-sm">SCANNER.EXE</span>
                     </div>
                     <div className="p-4 h-96 overflow-hidden">
                         <div className="absolute top-8 left-1/2 transform -translate-x-1/2 z-20">
-                            <h2 className="text-xl font-bold text-[#00FF00]">
+                            <h2 className="text-xl font-bold text-terminal-primary">
                                 {scanningText}
                             </h2>
                         </div>
 
                         <div className="absolute inset-0 z-10 w-full flex items-end justify-center pointer-events-none">
-                            <div className="absolute bottom-0 mb-4 w-full max-w-2xl min-h-[6rem] p-4 border-[1px] border-[#00FF00] bg-black flex items-center justify-center">
+                            <div className="absolute bottom-0 mb-4 w-full max-w-2xl min-h-[6rem] p-4 border-[1px] border-terminal-primary bg-background flex items-center justify-center">
                                 {showComment && currentComment ? (
                                     <div className="flex w-full">
                                         <ClankerIcon />
@@ -609,15 +609,15 @@ export default function SuccessPage() {
                                                 key={`comment-${currentItemIndex}`}
                                                 sequence={[currentComment]}
                                                 wrapper="p"
-                                                speed={SCANNING_CONSTANTS.TYPING_SPEED}
-                                                className="text-[#00FF00] text-sm text-center"
+                                                speed={SCANNING_CONSTANTS.TYPING_SPEED as any}
+                                                className="text-terminal-primary text-sm text-center"
                                                 cursor={false}
                                                 style={{ minHeight: '1.5em' }}
                                             />
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-[#00FF00] text-sm text-center"></div>
+                                    <div className="text-terminal-primary text-sm text-center"></div>
                                 )}
                             </div>
                         </div>
@@ -637,7 +637,7 @@ export default function SuccessPage() {
                                         key={index}
                                         className="flex-shrink-0 w-64 h-64"
                                         style={{
-                                            border: isInFocus ? '1px solid #00FF00' : '1px solid #333333',
+                                            border: isInFocus ? '1px solid var(--terminal-primary)' : '1px solid var(--terminal-secondary)',
                                             transform: isInFocus ? 'scale(1)' : 'scale(0.9)',
                                             opacity: isInFocus ? 1 : 0.5,
                                         }}
@@ -667,7 +667,7 @@ export default function SuccessPage() {
                 <motion.div key="ready" {...motionProps} className="flex flex-col items-center gap-6">
                     <div className="terminal-window w-full max-w-3xl">
                         <div className="terminal-titlebar">
-                            <span className="text-[#00FF00] text-sm">ANALYSIS COMPLETE</span>
+                            <span className="text-terminal-primary text-sm">ANALYSIS COMPLETE</span>
                         </div>
                         <div className="p-6">
                             <div className="flex">
@@ -677,7 +677,7 @@ export default function SuccessPage() {
                                         sequence={[roastExperience?.introMessage || "alright, i've seen enough. ready to get roasted?", 1000, () => setShowChoices(true)]}
                                         wrapper="p"
                                         speed={80}
-                                        className="text-[#00FF00]"
+                                        className="text-terminal-primary"
                                         cursor={true}
                                         style={{ minHeight: '1.5em' }}
                                     />
@@ -716,7 +716,7 @@ export default function SuccessPage() {
                 <motion.div key={`question-${currentQuestionIndex}`} {...motionProps} className="w-full max-w-4xl flex flex-col items-center gap-6">
                     <div className="terminal-window w-full">
                         <div className="terminal-titlebar">
-                            <span className="text-[#00FF00] text-sm">QUESTION {currentQuestionIndex + 1} OF {roastExperience.questions.length}</span>
+                            <span className="text-terminal-primary text-sm">QUESTION {currentQuestionIndex + 1} OF {roastExperience.questions.length}</span>
                         </div>
                         <div className="p-4 min-h-[6rem] flex items-center justify-center">
                             <div className="flex">
@@ -727,7 +727,7 @@ export default function SuccessPage() {
                                         sequence={[currentQuestion.question || "what's your favorite genre?", 500, onTypingDone]}
                                         wrapper="p"
                                         speed={80}
-                                        className="whitespace-pre-wrap text-[#00FF00]"
+                                        className="whitespace-pre-wrap text-terminal-primary"
                                         cursor={true}
                                         style={{ minHeight: '1.5em' }}
                                     />
@@ -744,7 +744,7 @@ export default function SuccessPage() {
                             className="terminal-window w-full p-4"
                         >
                             <div className="terminal-titlebar">
-                                <span className="text-[#00FF00] text-sm">RESPONSE</span>
+                                <span className="text-terminal-primary text-sm">RESPONSE</span>
                             </div>
                             <div className="p-4">
                                 <div className="flex">
@@ -762,7 +762,7 @@ export default function SuccessPage() {
                                             ]}
                                             wrapper="p"
                                             speed={80}
-                                            className="text-[#00FF00] whitespace-pre-wrap"
+                                            className="text-terminal-primary whitespace-pre-wrap"
                                             cursor={false}
                                             style={{ minHeight: '1.5em' }}
                                         />
@@ -774,7 +774,7 @@ export default function SuccessPage() {
 
                     {showChoices && !showResponse && currentQuestion.type === 'slider' && (
                         <div className="flex flex-col items-center gap-6 w-full pt-4">
-                            <p className="text-8xl font-black text-[#00FF00] tabular-nums">{sliderValue}</p>
+                            <p className="text-8xl font-black text-terminal-primary tabular-nums">{sliderValue}</p>
                             <div className="w-full max-w-md">
                                 <input
                                     type="range"
@@ -782,14 +782,14 @@ export default function SuccessPage() {
                                     max="100"
                                     value={sliderValue}
                                     onChange={(e) => setSliderValue(parseInt(e.target.value, 10))}
-                                    className="w-full h-4 bg-black border-[1px] border-[#00FF00] appearance-none cursor-pointer"
+                                    className="w-full h-4 bg-background border-[1px] border-terminal-primary appearance-none cursor-pointer"
                                     style={{
                                         WebkitAppearance: 'none',
                                         appearance: 'none',
-                                        background: `linear-gradient(to right, #00FF00 0%, #00FF00 ${sliderValue}%, black ${sliderValue}%, black 100%)`
+                                        background: `linear-gradient(to right, var(--terminal-primary) 0%, var(--terminal-primary) ${sliderValue}%, var(--terminal-background) ${sliderValue}%, var(--terminal-background) 100%)`
                                     }}
                                 />
-                                <div className="flex justify-between text-sm text-[#00FF00] mt-2">
+                                <div className="flex justify-between text-sm text-terminal-primary mt-2">
                                     <span className="w-2/5 text-left">{currentQuestion.choices[0]?.text || "not at all"}</span>
                                     <span className="w-2/5 text-right">{currentQuestion.choices[1]?.text || "absolutely"}</span>
                                 </div>
@@ -815,7 +815,7 @@ export default function SuccessPage() {
                                     >
                                         {choice.imageUrl ? (
                                             <div
-                                                className="w-40 h-40 border-[1px] border-[#00FF00] cursor-pointer hover:bg-[#00FF00] hover:bg-opacity-20"
+                                                className="w-40 h-40 border-[1px] border-terminal-primary cursor-pointer hover:bg-terminal-primary hover:bg-opacity-20"
                                                 onClick={() => handleChoice(choice.value || index.toString())}
                                             >
                                                 <img
@@ -830,15 +830,15 @@ export default function SuccessPage() {
                                                     }}
                                                 />
                                                 <div
-                                                    className="w-40 h-40 bg-black border-[1px] border-[#00FF00] cursor-pointer flex items-center justify-center text-center p-2"
+                                                    className="w-40 h-40 bg-background border-[1px] border-terminal-primary cursor-pointer flex items-center justify-center text-center p-2"
                                                     onClick={() => handleChoice(choice.value || index.toString())}
                                                     style={{ display: choice.imageUrl ? 'none' : 'flex' }}
                                                 >
-                                                    <span className="text-sm text-[#00FF00]">no cover art</span>
+                                                    <span className="text-sm text-terminal-primary">no cover art</span>
                                                 </div>
                                             </div>
                                         ) : null}
-                                        <p className="text-xs text-center w-40 text-[#00FF00]">{choice.text || `Option ${index + 1}`}</p>
+                                        <p className="text-xs text-center w-40 text-terminal-primary">{choice.text || `Option ${index + 1}`}</p>
                                     </div>
                                 ) : (
                                     <button
@@ -867,25 +867,25 @@ export default function SuccessPage() {
                 <motion.div key="complete" {...motionProps} className="flex flex-col items-center gap-6 max-w-5xl w-full">
                     <div className="terminal-window w-full">
                         <div className="terminal-titlebar">
-                            <span className="text-[#FF0000] text-sm">FINAL ANALYSIS</span>
+                            <span className="text-terminal-danger text-sm">FINAL ANALYSIS</span>
                         </div>
                         <div className="p-8">
                             {/* Album covers display */}
                             {albumCovers.length > 0 && (
-                                <div className="flex flex-wrap justify-center gap-3 mb-8 border-b-[1px] border-[#00FF00] pb-4">
+                                <div className="flex flex-wrap justify-center gap-3 mb-8 border-b-[1px] border-terminal-primary pb-4">
                                     {albumCovers.map((cover: any, index: number) => (
                                         <img
                                             key={index}
                                             src={cover}
                                             alt="Album cover"
-                                            className="w-16 h-16 object-cover border-[1px] border-[#00FF00]"
+                                            className="w-16 h-16 object-cover border-[1px] border-terminal-primary"
                                         />
                                     ))}
                                 </div>
                             )}
 
                             {/* Animated verdict display with auto-scroll */}
-                            <div 
+                            <div
                                 ref={verdictContainerRef}
                                 className="text-left font-mono text-base leading-relaxed max-h-[600px] overflow-y-auto pr-2"
                                 style={{ scrollBehavior: 'smooth' }}
@@ -894,19 +894,19 @@ export default function SuccessPage() {
                                 {verdictLines.slice(0, currentLineIndex).map((line, index) => {
                                     // Skip showing line 1 in completed lines since it gets replaced
                                     if (index === 1) return null;
-                                    
+
                                     return (
                                         <p key={index} className={`mb-2 ${getLineStyle(line, index)}`}>
                                             &gt; {line}
                                         </p>
                                     );
                                 })}
-                                
+
                                 {/* Show current typing line */}
                                 {currentLineIndex < verdictLines.length && (
                                     <p className={`mb-2 ${getLineStyle(verdictLines[currentLineIndex], currentLineIndex)}`}>
                                         &gt; {currentText}
-                                        {showCursor && <span className="text-[#00FF00]">█</span>}
+                                        {showCursor && <span className="text-terminal-primary">█</span>}
                                     </p>
                                 )}
                             </div>
@@ -948,7 +948,7 @@ export default function SuccessPage() {
     }, [step]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-black">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
             <style jsx>{`
                 @keyframes fadeInUp {
                     from {
@@ -963,8 +963,8 @@ export default function SuccessPage() {
             `}</style>
             <div className="flex flex-col items-center justify-center text-center gap-8 w-full flex-1">
                 {step !== 'complete' && session?.user?.name && (
-                    <h1 className="text-4xl font-bold text-white">
-                        welcome, <span className="font-bold text-[#00FF00]">{session.user.name}</span>
+                    <h1 className="text-4xl font-bold text-foreground">
+                        welcome, <span className="font-bold text-terminal-primary">{session.user.name}</span>
                     </h1>
                 )}
                 <AnimatePresence mode="wait">

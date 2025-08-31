@@ -12,15 +12,15 @@ export default function Login() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-black">
+        <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
             <div className="w-full max-w-md terminal-window">
                 <div className="terminal-titlebar">
-                    <span className="text-[#00FF00] text-sm">LOGIN.EXE</span>
+                    <span className="text-terminal-primary text-sm">LOGIN.EXE</span>
                 </div>
                 <div className="p-8 space-y-8">
                     <div className="text-center">
-                        <h2 className="text-3xl font-bold text-[#00FF00]">Roast.fm</h2>
-                        <p className="mt-2 text-white">Connect your Spotify account to get roasted</p>
+                        <h2 className="text-3xl font-bold text-terminal-primary">Roast.fm</h2>
+                        <p className="mt-2 text-foreground">Connect your Spotify account to get roasted</p>
                     </div>
 
                     <div className="flex flex-col space-y-4">
@@ -31,7 +31,7 @@ export default function Login() {
                         >
                             {isLoading ? (
                                 <>
-                                    <div className="w-5 h-5 border-[1px] border-[#00FF00] border-t-transparent animate-spin"></div>
+                                    <div className="w-5 h-5 border-[1px] border-terminal-primary border-t-transparent animate-spin"></div>
                                     <span>CONNECTING...</span>
                                 </>
                             ) : (

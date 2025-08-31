@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import AuthSessionProvider from '../components/SessionProvider';
+import { ThemeProvider } from '../contexts/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 const mono = IBM_Plex_Mono({
     subsets: ['latin'],
@@ -21,10 +23,13 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={`${mono.variable} font-mono bg-black text-white`}>
-                <AuthSessionProvider>
-                    {children}
-                </AuthSessionProvider>
+            <body className={`${mono.variable} font-mono bg-background text-foreground`}>
+                <ThemeProvider>
+                    <AuthSessionProvider>
+                        <ThemeToggle />
+                        {children}
+                    </AuthSessionProvider>
+                </ThemeProvider>
             </body>
         </html>
     );

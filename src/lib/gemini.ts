@@ -113,13 +113,13 @@ Do not include any markdown, code blocks, or extra text. Just the JSON array.
         console.error("Error generating scanning comments:", error);
         return tracksToScan.map((_, index) => [
             "scanning your atrocious taste...",
-            "what fresh hell is this...",
+            "this is worse than i thought...",
             "finding some questionable life choices...",
+            "what fresh hell is this...",
             "oh dear, this explains everything...",
             "your spotify wrapped must be embarrassing...",
             "i've seen middle schoolers with better taste...",
-            "this is worse than i thought...",
-            "someone needs to stage an intervention"
+            "someone needs to stage an intervention..."
         ][index] || "scanning your music crimes...");
     }
 }

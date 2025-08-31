@@ -15,18 +15,18 @@ export default function NeighborsPage() {
     }, [status]);
 
     return (
-        <div className="min-h-screen bg-black p-6">
+        <div className="min-h-screen bg-background p-6">
             <div className="max-w-4xl mx-auto pt-8 pb-24">
                 <div className="terminal-window">
                     <div className="terminal-titlebar">
-                        <span className="text-[#00FF00] text-sm">NEIGHBORS.EXE</span>
+                        <span className="text-terminal-primary text-sm">NEIGHBORS.EXE</span>
                     </div>
                     <div className="p-4">
-                        <h1 className="text-3xl font-bold text-[#00FF00] mb-8">Music Neighbors</h1>
+                        <h1 className="text-3xl font-bold text-terminal-primary mb-8">Music Neighbors</h1>
                         <hr className="terminal-hr" />
-                        <div className="text-center text-white mt-16">
+                        <div className="text-center text-foreground mt-16">
                             <pre>
-{`
+                                {`
  _____                 _               _____                     
 /  __ \\               (_)             /  ___|                    
 | /  \\/ ___  _ __ ___  _ _ __   __ _  \\ \`--.  ___   ___  _ __  

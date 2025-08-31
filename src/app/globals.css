@@ -2,55 +2,90 @@
 
 @layer base {
     :root {
-        --terminal-green: #00FF00;
-        --terminal-black: #000000;
-        --terminal-white: #FFFFFF;
-        --terminal-red: #FF0000;
+        --terminal-primary: #00FF00;
+        --terminal-background: #000000;
+        --terminal-foreground: #FFFFFF;
+        --terminal-danger: #FF0000;
+        --terminal-secondary: #333333;
+        --terminal-muted: #666666;
+    }
+
+    .light {
+        --terminal-primary: #000000;
+        --terminal-background: #FFFFFF;
+        --terminal-foreground: #00AA00;
+        --terminal-danger: #CC0000;
+        --terminal-secondary: #CCCCCC;
+        --terminal-muted: #999999;
     }
 
     body {
-        @apply bg-black text-white;
+        @apply transition-colors duration-300;
         font-family: 'IBM Plex Mono', 'Fira Mono', 'Courier New', monospace;
+        background-color: var(--terminal-background);
+        color: var(--terminal-foreground);
     }
 
     /* Terminal window styling */
     .terminal-window {
-        @apply bg-black border-[1px] border-[#00FF00] relative;
-        box-shadow: 5px 5px 0 #00FF00;
+        background-color: var(--terminal-background);
+        border: 1px solid var(--terminal-primary);
+        position: relative;
+        box-shadow: 5px 5px 0 var(--terminal-primary);
     }
 
     .terminal-titlebar {
-        @apply bg-black border-b-[1px] border-[#00FF00] px-3 py-1 flex items-center;
+        background-color: var(--terminal-background);
+        border-bottom: 1px solid var(--terminal-primary);
+        padding: 0.25rem 0.75rem;
+        display: flex;
+        align-items: center;
     }
 
     /* Button styling */
     .terminal-btn {
-        @apply bg-black text-[#00FF00] border-[1px] border-[#00FF00] px-4 py-2 font-bold cursor-pointer transition-colors;
+        background-color: var(--terminal-background);
+        color: var(--terminal-primary);
+        border: 1px solid var(--terminal-primary);
+        padding: 0.5rem 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s;
     }
 
     .terminal-btn:hover {
-        @apply bg-[#00FF00] text-black;
+        background-color: var(--terminal-primary);
+        color: var(--terminal-background);
     }
 
     .terminal-btn-danger {
-        @apply bg-black text-[#FF0000] border-[1px] border-[#FF0000] transition-colors;
+        background-color: var(--terminal-background);
+        color: var(--terminal-danger);
+        border: 1px solid var(--terminal-danger);
+        transition: all 0.2s;
     }
 
     .terminal-btn-danger:hover {
-        @apply bg-[#FF0000] text-black;
+        background-color: var(--terminal-danger);
+        color: var(--terminal-background);
     }
 
     /* Input styling */
     .terminal-input {
-        @apply bg-black text-[#00FF00] border-[1px] border-[#00FF00] px-3 py-2;
+        background-color: var(--terminal-background);
+        color: var(--terminal-primary);
+        border: 1px solid var(--terminal-primary);
+        padding: 0.5rem 0.75rem;
     }
 
     .terminal-input:focus {
-        @apply outline-none border-[#FF0000];
+        outline: none;
+        border-color: var(--terminal-danger);
     }
 
     hr.terminal-hr {
-        @apply border-t-[1px] border-[#00FF00] my-4;
+        border-top: 1px solid var(--terminal-primary);
+        margin: 1rem 0;
     }
 }
 
@@ -59,12 +94,36 @@
         font-family: 'IBM Plex Mono', 'Fira Mono', 'Courier New', monospace;
     }
 
-    .text-green {
-        color: #00FF00;
+    .text-terminal-primary {
+        color: var(--terminal-primary);
     }
 
-    .text-red {
-        color: #FF0000;
+    .text-terminal-danger {
+        color: var(--terminal-danger);
+    }
+
+    .text-terminal-secondary {
+        color: var(--terminal-secondary);
+    }
+
+    .text-terminal-muted {
+        color: var(--terminal-muted);
+    }
+
+    .bg-background {
+        background-color: var(--terminal-background);
+    }
+
+    .bg-foreground {
+        background-color: var(--terminal-foreground);
+    }
+
+    .text-foreground {
+        color: var(--terminal-foreground);
+    }
+
+    .border-terminal-primary {
+        border-color: var(--terminal-primary);
     }
 
     .animate-blink {

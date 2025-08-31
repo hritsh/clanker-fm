@@ -1,7 +1,7 @@
 export default function ClankerIcon() {
     return (
         <div className="inline-block mr-2">
-            <pre className="text-[#00FF00] text-xs">
+            <pre className="text-terminal-primary text-xs">
                 {`+---+ 
 |o_o| 
 |_-_| `}
