@@ -12,8 +12,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-    title: 'Roast FM',
-    description: 'Get roasted based on your Spotify music taste',
+    title: 'Clanker FM',
+    description: 'Get Clanker to roast your Spotify music taste',
 };
 
 export default function RootLayout({

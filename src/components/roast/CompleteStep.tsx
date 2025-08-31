@@ -96,7 +96,7 @@ export default function CompleteStep({
                     {currentLineIndex >= verdictLines.length && (
                         <div className="flex flex-col items-center gap-4 mt-8">
                             <Link
-                                href="/home"
+                                href="/"
                                 className="terminal-btn"
                             >
                                 RESTART SYSTEM

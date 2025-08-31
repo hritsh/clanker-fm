@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 export default function Loading() {
     const [currentStep, setCurrentStep] = useState(0);
-    const [progress, setProgress] = useState(0);
+    const [progress, setProgress] = useState(15);
 
     const steps = [
         "scanning your atrocious taste...",
