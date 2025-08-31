@@ -2,22 +2,93 @@
 
 @layer base {
     :root {
-        --spotify-green: #1DB954;
-        --spotify-black: #191414;
-        --warm-off-white: #FBF9F1;
-        --cool-gray: #E5E1DA;
-        --text-color: #FFFFFF;
+        --terminal-green: #00FF00;
+        --terminal-black: #000000;
+        --terminal-white: #FFFFFF;
+        --terminal-red: #FF0000;
     }
 
     body {
-        @apply bg-[#191414] text-white;
-        font-family: 'Inter', sans-serif;
+        @apply bg-black text-white;
+        font-family: 'IBM Plex Mono', 'Fira Mono', 'Courier New', monospace;
+    }
+
+    /* Terminal window styling */
+    .terminal-window {
+        @apply bg-black border-[1px] border-[#00FF00] relative;
+        box-shadow: 5px 5px 0 #00FF00;
+    }
+
+    .terminal-titlebar {
+        @apply bg-black border-b-[1px] border-[#00FF00] px-3 py-1 flex items-center;
+    }
+
+    /* Button styling */
+    .terminal-btn {
+        @apply bg-black text-[#00FF00] border-[1px] border-[#00FF00] px-4 py-2 font-bold cursor-pointer transition-colors;
+    }
+
+    .terminal-btn:hover {
+        @apply bg-[#00FF00] text-black;
+    }
+
+    .terminal-btn-danger {
+        @apply bg-black text-[#FF0000] border-[1px] border-[#FF0000] transition-colors;
+    }
+
+    .terminal-btn-danger:hover {
+        @apply bg-[#FF0000] text-black;
+    }
+
+    /* Input styling */
+    .terminal-input {
+        @apply bg-black text-[#00FF00] border-[1px] border-[#00FF00] px-3 py-2;
+    }
+
+    .terminal-input:focus {
+        @apply outline-none border-[#FF0000];
+    }
+
+    hr.terminal-hr {
+        @apply border-t-[1px] border-[#00FF00] my-4;
     }
 }
 
 @layer utilities {
-    .text-balance {
-        text-wrap: balance;
+    .text-terminal {
+        font-family: 'IBM Plex Mono', 'Fira Mono', 'Courier New', monospace;
+    }
+
+    .text-green {
+        color: #00FF00;
+    }
+
+    .text-red {
+        color: #FF0000;
+    }
+
+    .animate-blink {
+        animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+        50% {
+            opacity: 0;
+        }
+    }
+
+    .animate-scan {
+        animation: scroll 30s linear infinite;
+    }
+
+    @keyframes scroll {
+        from {
+            transform: translateX(0);
+        }
+
+        to {
+            transform: translateX(-100%);
+        }
     }
 
     .animate-fade-in-up {
@@ -33,20 +104,6 @@
         100% {
             opacity: 1;
             transform: translateY(0);
-        }
-    }
-
-    .animate-scan {
-        animation: scroll 30s linear infinite;
-    }
-
-    @keyframes scroll {
-        from {
-            transform: translateX(0);
-        }
-
-        to {
-            transform: translateX(-100%);
         }
     }
 }

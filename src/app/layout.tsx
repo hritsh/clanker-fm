@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import AuthSessionProvider from '../components/SessionProvider';
 
-const inter = Inter({ subsets: ['latin'] });
+const mono = IBM_Plex_Mono({
+    subsets: ['latin'],
+    weight: ['400', '500', '700'],
+    variable: '--font-mono'
+});
 
 export const metadata: Metadata = {
     title: 'Roast FM',
@@ -17,7 +21,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="en">
-            <body className={inter.className}>
+            <body className={`${mono.variable} font-mono bg-black text-white`}>
                 <AuthSessionProvider>
                     {children}
                 </AuthSessionProvider>

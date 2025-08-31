@@ -42,7 +42,14 @@ const cleanDataForAI = (roastData: any) => {
 // Helper function to clean JSON response from markdown
 const cleanJsonResponse = (text: string): string => {
     // Remove markdown code blocks if present
-    const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    let cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+
+    // Try to extract just the JSON part using regex
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+    if (jsonMatch) {
+        cleaned = jsonMatch[0];
+    }
+
     return cleaned;
 };
 
@@ -71,28 +78,37 @@ for each track in tracksToScan:
 - length: aim for 18-22 words (roughly 110-140 characters)
 - start naturally, e.g. "im seeing...", "oh another...", "still on the...", "wow, [song] huh..."
 - always weave in the artist or song name, but not always at the start
+- don't include both the artist and song name in every comment
 - include at least one specific observation about the track/artist/genre
 - include at least one personality jab or lifestyle assumption
 - lean into "you think you're niche but you're not" energy
-- end with a subtle or blunt reminder that they're still basic
+- end with a subtle or blunt reminder that they're still basic if its a niche artist
 - no greetings, no explanations, just the roast
+- if it is a mainstream artist, completely flame them for being like an npc
 
 example burns:
 - "im seeing 'midnight city' by m83... the soundtrack to every fake-deep instagram story. still basic as hell."
 - "oh another tame impala fan. you probably call this psychedelic while buying oat milk at target. basic shit."
+- "of course you are a mac demarco fan. you think you're so unique with your lo-fi vibes, but you're just basic."
 - "yep, 'bad habit' by steve lacy. edgy in theory, but spotify's algorithm owns your ass."
 - "still on the phoebe bridgers train i see. sad indie cosplay complete. basic."
 - "wow, 'blinding lights' huh. living on the edge of 2020 forever. basic energy."
 
-output format:
-["comment for track 1", "comment for track 2", ...]
-respond with ONLY a valid JSON array of strings, no markdown, no extra text.
+respond with ONLY a valid JSON array of strings in this exact format:
+["comment 1", "comment 2", "comment 3"]
+
+Do not include any markdown, code blocks, or extra text. Just the JSON array.
     `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const cleanedText = cleanJsonResponse(response.text());
-        return JSON.parse(cleanedText);
+        const text = response.text();
+        const cleanedText = cleanJsonResponse(text);
+        console.log("Cleaned text for scanning:", cleanedText);
+
+        const parsed = JSON.parse(cleanedText);
+        return Array.isArray(parsed) ? parsed : [];
+
     } catch (error) {
         console.error("Error generating scanning comments:", error);
         return tracksToScan.map((_, index) => [
@@ -119,7 +135,8 @@ personality: lowercase, dry, observational, self-aware bot who gives honest burn
 
 user data: ${JSON.stringify(cleanedData)}
 
-create a JSON response with this exact structure:
+respond with ONLY a valid JSON object in this exact format (no markdown, no code blocks):
+
 {
   "introMessage": "opening line before questions start",
   "questions": [
@@ -160,8 +177,13 @@ respond with ONLY valid JSON, no markdown formatting, no other text.
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const cleanedText = cleanJsonResponse(response.text());
+        const text = response.text();
+
+        const cleanedText = cleanJsonResponse(text);
+        console.log("Cleaned text for roast:", cleanedText);
+
         return JSON.parse(cleanedText);
+
     } catch (error) {
         console.error("Error generating complete roast experience:", error);
         return {
