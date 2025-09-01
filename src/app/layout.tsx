@@ -26,6 +26,18 @@ export default function RootLayout({
             <body className={`${mono.variable} font-mono bg-background text-foreground`}>
                 <ThemeProvider>
                     <AuthSessionProvider>
+                        {/* Header with Clanker's face and logo */}
+                        <header className="fixed top-0 left-0 z-50 p-4">
+                            <div className="flex items-center space-x-3">
+                                <pre className="text-xs text-terminal-primary leading-none m-0 p-0" title="clanker judges your taste">
+                                    {`+---+
+|o_o|
+|_-_|`}
+                                </pre>
+                                <div className="text-terminal-primary font-bold text-lg">clanker.fm</div>
+                            </div>
+                        </header>
+
                         <ThemeToggle />
                         {children}
                     </AuthSessionProvider>
