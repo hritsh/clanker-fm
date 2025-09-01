@@ -5,7 +5,7 @@
 <h1 align="center">clanker.fm</h1>
 
 <p align="center">
-  <img src="public/demo.gif" alt="demo" width="600"/>
+  <img src="public/screenshots/home.gif" alt="demo" width="600"/>
 </p>
 
 ---
