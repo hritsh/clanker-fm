@@ -11,7 +11,7 @@ import {
     generateScanningComments,
     generateCompleteRoastExperience,
     generateIntroMessage
-} from '../../../lib/gemini';
+} from '../../../lib/ai';
 
 export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
