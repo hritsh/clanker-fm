@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CacheManager, CACHE_KEYS } from '../lib/cache';
 
 export interface ScannableItem {
     name: string;
@@ -88,9 +89,23 @@ export const useRoastAnalysis = () => {
             setScanningCommentsLoaded(true);
             setRoastExperience(roastExperience);
 
+            // Cache the complete roast data for viewing later
+            if (roastExperience) {
+                const roastCacheData = {
+                    roastTitle: `clanker's brutal assessment`,
+                    roastContent: roastExperience.introMessage || '',
+                    verdict: roastExperience.finalVerdict || '',
+                    score: roastExperience.score || Math.floor(Math.random() * 3) + 1, // random low score if not provided
+                    timestamp: Date.now(),
+                    questions: roastExperience.questions || []
+                };
+                CacheManager.set(CACHE_KEYS.LAST_ROAST, roastCacheData, 7 * 24 * 60 * 60 * 1000); // Cache for 7 days
+            }
+
             return { success: true, itemsToScan, defaultComments: defaultScanningComments };
 
-        } catch (err) {
+        } catch (error) {
+            console.error('Analysis error:', error);
             setError("failed to fetch your spotify data.");
             return { success: false };
         } finally {
