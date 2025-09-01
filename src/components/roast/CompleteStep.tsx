@@ -382,10 +382,10 @@ export default function CompleteStep({
                                     )}
                                 </button>
                                 <Link
-                                    href="/"
+                                    href="/home"
                                     className="terminal-btn"
                                 >
-                                    RESTART SYSTEM
+                                    GO TO DASHBOARD
                                 </Link>
                             </div>
                         </div>

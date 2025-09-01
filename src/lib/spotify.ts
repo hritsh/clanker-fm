@@ -42,6 +42,32 @@ export async function getArtistTopTracks(
     );
 }
 
+// Get user's music data formatted for similarity comparison
+export async function getUserMusicData(accessToken: string) {
+    const [topArtists, topTracks] = await Promise.all([
+        getTopItems(accessToken, 'artists', 'medium_term', 10),
+        getTopItems(accessToken, 'tracks', 'medium_term', 10)
+    ]);
+
+    // Extract genres from artists
+    const allGenres = topArtists.items?.flatMap((artist: any) => artist.genres) || [];
+    const genreCount = allGenres.reduce((acc: any, genre: string) => {
+        acc[genre] = (acc[genre] || 0) + 1;
+        return acc;
+    }, {});
+
+    const topGenres = Object.entries(genreCount)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+        .slice(0, 10)
+        .map(([genre]) => genre);
+
+    return {
+        artists: topArtists.items?.map((artist: any) => artist.name) || [],
+        songs: topTracks.items?.map((track: any) => `${track.name} - ${track.artists?.[0]?.name}`) || [],
+        genres: topGenres
+    };
+}
+
 async function fetchFromSpotify(endpoint: string, accessToken: string) {
     const res = await fetch(`${SPOTIFY_API_BASE}${endpoint}`, {
         headers: {
