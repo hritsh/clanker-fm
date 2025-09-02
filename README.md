@@ -95,7 +95,7 @@ clanker doesn’t just spit out a verdict — he makes you squirm first.
   </tr>
   <tr>
     <td align="center">
-      Step 3: The final roast verdict and score
+      step 3: the final roast verdict and scores
     </td>
   </tr>
 </table>
@@ -193,12 +193,12 @@ things clanker does because it can.
   <tr>
     <td align="center"><img src="public/screenshots/mobiledark.png" width="180"/></td>
     <td align="center"><img src="public/screenshots/mobilelight.png" width="180"/></td>
-    <td align="center"><img src="public/screenshots/roast_card.png" width="180"/></td>
+    <td align="center"><img src="public/screenshots/roast_card.png" width="320"/></td>
   </tr>
   <tr>
-    <td align="center"><em>Mobile dark</em></td>
-    <td align="center"><em>Mobile light</em></td>
-    <td align="center"><em>Exportable roast card</em></td>
+    <td align="center"><em>mobile dark</em></td>
+    <td align="center"><em>mobile light</em></td>
+    <td align="center"><em>exportable roast card</em></td>
   </tr>
 </table>
 
@@ -208,8 +208,8 @@ things clanker does because it can.
     <td align="center"><img src="public/screenshots/home_dark.png" width="250"/></td>
   </tr>
   <tr>
-    <td align="center"><em>Light mode</em></td>
-    <td align="center"><em>Dark mode</em></td>
+    <td align="center"><em>light mode</em></td>
+    <td align="center"><em>dark mode</em></td>
   </tr>
 </table>
 
