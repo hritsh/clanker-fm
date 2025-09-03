@@ -121,14 +121,13 @@ function getClientIP(request: NextRequest): string {
 // Helper function to get country from IP
 async function getCountryFromIP(ip: string): Promise<{ code: string; flag: string }> {
     try {
-        // Use ipapi.co for IP geolocation (free tier allows 1000 requests/day)
-        const response = await fetch(`https://ipapi.co/${ip}/json/`);
+        const response = await fetch(`https://api.country.is/${ip}`);
         const data = await response.json();
 
-        if (data.country_code) {
+        if (data.country) {
             return {
-                code: data.country_code,
-                flag: getCountryFlag(data.country_code)
+                code: data.country,
+                flag: getCountryFlag(data.country)
             };
         }
     } catch (error) {
