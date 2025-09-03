@@ -21,12 +21,9 @@ export async function POST(request: NextRequest) {
             getUserMusicData(accessToken)
         ]);
 
-        console.log('User profile:', userProfile);
-        console.log('User music data:', userMusicData);
-
-        // Get country from IP address
-        const clientIP = getClientIP(request);
-        const countryInfo = await getCountryFromIP(clientIP);
+        // Get country from Vercel geolocation headers
+        const countryInfo = getCountryFromHeaders(request);
+        console.log(`User country: ${countryInfo.code} ${countryInfo.flag}`);
 
         // Create user data for database storage
         const currentUserData: DbUser = {
@@ -101,53 +98,22 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// Helper function to get client IP
-function getClientIP(request: NextRequest): string {
-    const forwarded = request.headers.get('x-forwarded-for');
-    const realIP = request.headers.get('x-real-ip');
-
-    if (forwarded) {
-        return forwarded.split(',')[0].trim();
-    }
-
-    if (realIP) {
-        return realIP;
-    }
-
-    // Fallback to connection remote address
-    return '127.0.0.1'; // localhost fallback
-}
-
-// Helper function to get country from IP
-async function getCountryFromIP(ip: string): Promise<{ code: string; flag: string }> {
-    try {
-        const response = await fetch(`https://api.country.is/${ip}`);
-        const data = await response.json();
-
-        if (data.country) {
-            return {
-                code: data.country,
-                flag: getCountryFlag(data.country)
-            };
-        }
-    } catch (error) {
-        console.error('Error fetching country from IP:', error);
-    }
-
-    // Fallback to world emoji
-    return { code: 'XX', flag: '🌍' };
+// Helper function to get country from Vercel geolocation headers
+function getCountryFromHeaders(request: NextRequest): { code: string; flag: string } {
+    // Vercel sets these headers in production
+    const countryCode = request.headers.get('x-vercel-ip-country');
+    return {
+        code: countryCode || 'XX',
+        flag: getCountryFlag(countryCode || 'XX')
+    };
 }
 
 // Helper function to convert country code to flag emoji
 function getCountryFlag(countryCode: string): string {
-    console.log('Getting country flag for:', countryCode);
     if (!countryCode || countryCode.length !== 2) return '🌍';
     const codePoints = countryCode
         .toUpperCase()
         .split('')
         .map(char => 0x1F1E6 - 65 + char.charCodeAt(0));
-
-    console.log('Country flag code points:', codePoints);
-    console.log('Country flag emoji:', String.fromCodePoint(...codePoints));
     return String.fromCodePoint(...codePoints);
 }
