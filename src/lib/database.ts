@@ -1,4 +1,5 @@
 export interface User {
+    id?: string; // Spotify user ID
     username: string;
     country: string; // flag emoji
     artists: string[];
@@ -399,8 +400,11 @@ export function calculateSimilarity(user1Data: Partial<User>, user2: User): Simi
     };
 }
 
-export function findSimilarUsers(userData: Partial<User>, limit: number = 5): SimilarityResult[] {
-    return MOCK_USERS
+export function findSimilarUsers(userData: Partial<User>, allUsers: User[], limit: number = 5): SimilarityResult[] {
+    // Combine real users and mock users
+    const combinedUsers = [...allUsers, ...MOCK_USERS];
+
+    return combinedUsers
         .map(user => calculateSimilarity(userData, user))
         .sort((a, b) => b.compatibility - a.compatibility)
         .slice(0, limit);

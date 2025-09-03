@@ -1,19 +1,33 @@
 import { useState, useEffect } from 'react';
 
-export default function Loading() {
+type LoadingProps = {
+    neighbors?: boolean;
+};
+
+export default function Loading({ neighbors = false }: LoadingProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [progress, setProgress] = useState(15);
 
-    const steps = [
-        "scanning your atrocious taste...",
-        "this is worse than i thought...",
-        "finding some questionable life choices...",
-        "what fresh hell is this...",
-        "oh dear, this explains everything...",
-        "your spotify wrapped must be embarrassing...",
-        "i've seen middle schoolers with better taste...",
-        "someone needs to stage an intervention..."
-    ];
+    const steps = neighbors
+        ? [
+            "scanning my database for other atrocities...",
+            "your neighbors are just as lost...",
+            "group therapy might help...",
+            "comparing questionable choices...",
+            "at least you're not alone in this...",
+            "finding the least embarrassing neighbor...",
+            "maybe it's something in the water..."
+        ]
+        : [
+            "scanning your atrocious taste...",
+            "this is worse than i thought...",
+            "finding some questionable life choices...",
+            "what fresh hell is this...",
+            "oh dear, this explains everything...",
+            "your spotify wrapped must be embarrassing...",
+            "i've seen middle schoolers with better taste...",
+            "someone needs to stage an intervention..."
+        ];
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -26,7 +40,7 @@ export default function Loading() {
         }, 2000); // Change every 2 seconds
 
         return () => clearInterval(interval);
-    }, []);
+    }, [steps.length]);
 
     const getProgressBar = () => {
         const filled = Math.floor(progress / 5); // 20 characters max (100% / 5)
@@ -48,4 +62,8 @@ ${steps[currentStep]}`}
             </div>
         </div>
     );
+}
+
+export function LoadingNeighbors() {
+    return <Loading neighbors />;
 }

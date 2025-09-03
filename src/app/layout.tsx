@@ -6,6 +6,8 @@ import AuthSessionProvider from '../components/SessionProvider';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
 import Logo from '../components/Logo';
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const mono = IBM_Plex_Mono({
     subsets: ['latin'],
@@ -40,6 +42,8 @@ export default function RootLayout({
                         {children}
                     </AuthSessionProvider>
                 </ThemeProvider>
+                <Analytics />
+                <SpeedInsights />
             </body>
         </html>
     );

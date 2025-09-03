@@ -45,8 +45,8 @@ export async function getArtistTopTracks(
 // Get user's music data formatted for similarity comparison
 export async function getUserMusicData(accessToken: string) {
     const [topArtists, topTracks] = await Promise.all([
-        getTopItems(accessToken, 'artists', 'medium_term', 10),
-        getTopItems(accessToken, 'tracks', 'medium_term', 10)
+        getTopItems(accessToken, 'artists', 'medium_term', 15),
+        getTopItems(accessToken, 'tracks', 'medium_term', 15)
     ]);
 
     // Extract genres from artists
@@ -58,7 +58,7 @@ export async function getUserMusicData(accessToken: string) {
 
     const topGenres = Object.entries(genreCount)
         .sort(([, a], [, b]) => (b as number) - (a as number))
-        .slice(0, 10)
+        .slice(0, 15)
         .map(([genre]) => genre);
 
     return {

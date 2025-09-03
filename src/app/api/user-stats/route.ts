@@ -15,8 +15,8 @@ export async function GET() {
     try {
         // Get top artists, tracks, and extract genres
         const [topArtists, topTracks] = await Promise.all([
-            getTopItems(accessToken, 'artists', 'medium_term', 10),
-            getTopItems(accessToken, 'tracks', 'medium_term', 10)
+            getTopItems(accessToken, 'artists', 'medium_term', 20),
+            getTopItems(accessToken, 'tracks', 'medium_term', 20)
         ]);
 
         // Extract and count genres from top artists
@@ -28,7 +28,7 @@ export async function GET() {
 
         const topGenres = Object.entries(genreCount)
             .sort(([, a], [, b]) => (b as number) - (a as number))
-            .slice(0, 10)
+            .slice(0, 20)
             .map(([genre]) => genre);
 
         const userStats = {

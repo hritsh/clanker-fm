@@ -42,7 +42,7 @@ it also connects you with other users who share your questionable taste.
 | AI         | openai api / gemini api |
 | State      | react context + hooks   |
 | Export     | html2canvas             |
-| Database   | vercel postgresql       |
+| Database   | supabase postgresql     |
 | Deployment | vercel                  |
 
 ---
@@ -138,7 +138,7 @@ clanker will happily point out who else is stuck in your sonic bubble.
 - **ranked list**: most compatible “victims” shown with similarity %, common artists/tracks/genres
 - **mutual bad taste**: if you share questionable habits, clanker will call it out (“you both have terrible taste in experimental hip hop and alternative hip hop”)
 - **shared delusions**: lists the genres you both cling to
-- **db-backed**: powered by vercel postgresql so the database is updated in real-time every time someone signs up
+- **db-backed**: powered by supabase postgresql so the database is updated in real-time every time someone signs up
 
 <table align="center">
   <tr>
@@ -252,7 +252,7 @@ pudding walked so clanker could roast at scale.
 2. ai roast generation (openai api and gemini api options) with interactive q&a
 3. fetch top tracks, artists, genres, patterns
 4. homepage sections populate with stats
-5. neighbours query vercel postgresql db + compute similarity (weighted jaccard algorithm)
+5. neighbours query supabase postgresql db + compute similarity (weighted jaccard algorithm)
 6. export custom roast card via html2canvas
 
 ---
@@ -278,12 +278,12 @@ cp .env.example .env.local
 npm run dev
 ```
 
-### required apis:
+### required env vars:
 
 - spotify developer app
 - openai or gemini api key
 - nextauth secret
-- vercel postgresql db
+- supabase postgresql db keys
 
 ---
 

@@ -7,7 +7,7 @@
         --terminal-foreground: #FFFFFF;
         --terminal-danger: #FF0000;
         --terminal-secondary: #333333;
-        --terminal-muted: #666666;
+        --terminal-muted: #888888;
     }
 
     .light {
