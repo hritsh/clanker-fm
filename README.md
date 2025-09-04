@@ -266,6 +266,37 @@ pudding walked so clanker could roast at scale.
 
 ---
 
+### 🧠 prompt & token optimisation
+
+clanker used to run on **multiple prompts and API calls** — one for scanning comments, another for the Q&A, another for the final verdict, plus a few extras.
+
+this meant:
+
+- repeated injection of the same spotify data
+- higher token usage (and cost)
+- more latency between roast stages
+- more places to update when tweaking tone or style
+- for the interactive Q&A, **6 separate API calls** — one per question — slowing things down
+
+now it’s down to **just two prompts** — one for scanning comments, one for the complete roast experience — and it **precomputes all answers for the interactive Q&A** in a single call, so the rest of the flow feels instant.
+
+| Before                              | After                                |
+| ----------------------------------- | ------------------------------------ |
+| 4–5 separate prompts & API calls    | 2 unified prompts                    |
+| repeated data context in each call  | single data pass per stage           |
+| higher token usage & cost           | fewer tokens, cheaper runs           |
+| Q&A: 6 API calls (one per question) | Q&A: precomputed answers in one call |
+| more latency between steps          | faster, smoother roast flow          |
+
+**impact:**
+
+- ~40% fewer tokens per roast
+- noticeably faster response times
+- instant Q&A interactions (no waiting between questions)
+- simpler, easier‑to‑maintain prompt definitions
+
+---
+
 ## 🏗 development
 
 ```bash
