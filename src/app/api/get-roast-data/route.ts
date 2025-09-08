@@ -12,6 +12,27 @@ import {
     generateCompleteRoastExperience,
     generateIntroMessage
 } from '../../../lib/ai';
+import { upsertUser } from '../../../lib/supabase'; // <-- import upsertUser
+
+// Helper function to get country from Vercel geolocation headers
+function getCountryFromHeaders(request: NextRequest): { code: string; flag: string } {
+    // Vercel sets these headers in production
+    const countryCode = request.headers.get('x-vercel-ip-country');
+    return {
+        code: countryCode || 'XX',
+        flag: getCountryFlag(countryCode || 'XX')
+    };
+}
+
+// Helper function to convert country code to flag emoji
+function getCountryFlag(countryCode: string): string {
+    if (!countryCode || countryCode.length !== 2) return '🌍';
+    const codePoints = countryCode
+        .toUpperCase()
+        .split('')
+        .map(char => 0x1F1E6 - 65 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+}
 
 export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -42,6 +63,20 @@ export async function GET(request: NextRequest) {
             .sort(([, a], [, b]) => (b as number) - (a as number))
             .slice(0, 8)
             .map(([genre]) => genre);
+
+        const countryInfo = getCountryFromHeaders(request);
+        userProfile.country = countryInfo.flag;
+
+        // Upsert user profile data right after login
+        await upsertUser({
+            id: userProfile.id,
+            username: userProfile.display_name || userProfile.id,
+            country: userProfile.country || '🌍',
+            artists: topArtists.items?.map((artist: any) => artist.name) || [],
+            songs: topTracks.items?.map((track: any) => `${track.name} - ${track.artists?.[0]?.name}`) || [],
+            genres: topGenres,
+            image: userProfile.images?.[0]?.url || null
+        });
 
         const roastData = {
             userProfile,
